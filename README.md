@@ -36,6 +36,8 @@ Charging is done via a separate plug with 10A (with the stock charger). The conn
 The stock charger seems to be a fairly simple/standard 16S CV/CC charger with 67.2V and 10A.
 
 #### Charge Connector
+![CNLinko connector with pin markings](./images/battery-charge-connector.jpg)
+
 The charge connector is a 3-pin CNLinko LP-20 ("female socket" on the battery side, "male plug" on the charger side).
 
 The pinout is:
@@ -44,17 +46,21 @@ The pinout is:
 - Pin 3: not connected
 
 #### Discharge Connector
+![RCPROPLUS connector with positive and negative marking](./images/battery-discharge-connector.jpg)
+
 The discharge connector is a RCPROPLUS "REB 6808 Pro D6 P8" and uses the "female" contacts for both pins on the battery side. The pin toward the corner of the battery (with the larger plastic shroud around the contact) is the _positive_ terminal.
 
 So the connector on the bike side has two "male" contacts and the one with the larger plastic shroud is the _negative_ terminal.
 
 #### BMS Connector
 
+![6-pin bms connector on the battery with tab at the bottom](./images/battery-bms-connector.jpg)
+
 The connector can be found under multiple names, but seem to be (clones of?) Furukawa RFW-series connectors[^bms-connector-datasheet].
 - Battery side: `FW-C-6M-B` / `DJ7061Y-2.3-11`
 - Bike side: `FW-C-6F-B` / `DJ7061Y-2.3-21`
 
-The [wiring diagram](./docs/SR%20diagram%20AE%20bikes%20copy.pdf) is pretty helpful here (even though it only has the wire colors). Pin positions are given looking at the bike side connector from the back with the retention clip at the bottom.
+The [wiring diagram](./docs/SR%20diagram%20AE%20bikes%20copy.pdf) is pretty helpful here (even though it only has the wire colors). Pin positions are given looking at the bike side connector from the back with the retention clip at the bottom (like in the picture above).
 
 | Position | Color | Description | Connection |
 | --- | --- | --- | --- |
