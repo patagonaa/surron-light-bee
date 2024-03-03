@@ -8,6 +8,7 @@ Official documentation:
 - [Owner's Manual](./docs/Surron_LBX_Dual-Sport_E-Dirt_Bike_Owners_Manual.pdf)
 - [Parts catalogue](./docs/Surron_LBX_Parts_Catalogue.pdf)
 - [EU certificate of conformity report](./docs/surronlightbeecoc-papiere.pdf)
+- [GPS tracker manual](./docs/Surron_QL-TBOX-JM_User_Manual.pdf)
 
 ## Mechanics
 ### Chain
@@ -79,6 +80,12 @@ The stock headlights seem to be of dubious quality, as mine has died two times w
 
 The connector seems to be `DJ7026-2-11` (headlight side) / `DJ7026-2-21` (bike side)
 
+### GPS tracker
+
+There is an official GPS tracker `QL-TBOX-JM` available, for which there is a connector under the seat in recent models. The tracker has an internal battery and runs of the full 60V battery voltage (so it can charge even when the 12V system is inactive).
+
+According to the FCC application `2A92B-QL-TBOX-JM` [^tracker-fcc] and the user manual, the tracker has inputs for power, ignition and CAN, though in the surron, as far as I can tell, only power and ignition are used. 
+
 
 [^forum-manual]: Inofficial manual, links to official manuals, etc.: https://electricbike.com/forum/forum/knowledge-base/surron/147526-sur-ron-manual
 
@@ -87,3 +94,7 @@ The connector seems to be `DJ7026-2-11` (headlight side) / `DJ7026-2-21` (bike s
 [^bms-connector-datasheet]: BMS connector datasheet https://www.furukawa.co.jp/product/catalogue/pdf/auto/auto_wpcon_01rfw.pdf
 
 [^led-harness]: Diagnostic harness description https://endless-sphere.com/sphere/threads/sur-ron-new-mid-drive-bike.89902/post-1736885
+
+[^tracker-fcc]: GPS tracker FCC application (FCCID `2A92B-QL-TBOX-JM`):
+    - https://fccid.io/2A92B-QL-TBOX-JM
+    - https://www.fcc.gov/oet/ea/fccid
