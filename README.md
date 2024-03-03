@@ -29,9 +29,17 @@ Tire spec is `70/100-19 41N TT` / `2.5-19 41N TT` and the stock tires are either
 
 ### Battery
 
-"60V nominal", 16S11P, Panasonic NCR18650PF cells[^forum-manual]. The BMS is a Greenway LP008[^replacement-bms], which is said to allow discharging at up to 90A.
+"60V nominal", 16S11P, Panasonic NCR18650PF cells[^forum-manual]. These would allow up to 21A charge and 90A discharge current.
 
 Charging is done via a separate plug with 10A (with the stock charger). The connector pins would allow 20A charging (as would the cells), however it is unclear if the BMS might die / overheat when doing so.
+
+#### BMS
+
+The BMS is a Greenway LP008[^replacement-bms], which is said to limit the discharge current to around 90A (which is also what the cells are rated for).
+
+Some people do a "BMS bypass mod" to get more power out of the battery (with aftermarket ESCs), which is just putting a link across the BMS so it can never switch off. I would strongly advise against doing so, as you can over-discharge and damage the cells and a short circuit will likely melt the connectors and wires and cause a fire.
+
+According to one forum user's friend (very reliable info, I know) the BMS can be reprogrammed to allow higher current draw[^forum-bms-rs485].
 
 #### Charger
 The stock charger seems to be a fairly simple/standard 16S CV/CC charger with 67.2V and 10A.
@@ -88,6 +96,11 @@ According to the FCC application `2A92B-QL-TBOX-JM` [^tracker-fcc] and the user 
 
 
 [^forum-manual]: Inofficial manual, links to official manuals, etc.: https://electricbike.com/forum/forum/knowledge-base/surron/147526-sur-ron-manual
+
+[^forum-bms-rs485]: 
+    Forum posts with claims about BMS RS485 capabilities:
+    - https://endless-sphere.com/sphere/threads/sur-ron-new-mid-drive-bike.89902/page-221#post-1665199
+    - https://endless-sphere.com/sphere/threads/sur-ron-new-mid-drive-bike.89902/page-222#post-1669303
 
 [^replacement-bms]: Replacement BMS pictures: https://surron.at/produkt/sur-ron-batteriemanagement-bms/
 
