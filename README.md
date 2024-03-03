@@ -3,7 +3,7 @@ Information about the Surron Light Bee / Firefly and its components. These are c
 
 Official documentation:
 - [Error/Diagnostic codes](./docs/Diagnostic_chart_X_Series_lead_LED.pdf)
-- [Wiring diagram](./docs/SR%20diagram%20AE%20bikes%20copy.pdf)
+- [Wiring diagram](./docs/Surron_Wiring_Diagram_A_Ebikes.pdf)
 - [Torque settings](./docs/Surron_LB_Torque_Settings.pdf)
 - [Owner's Manual](./docs/Surron_LBX_Dual-Sport_E-Dirt_Bike_Owners_Manual.pdf)
 - [Parts catalogue](./docs/Surron_LBX_Parts_Catalogue.pdf)
@@ -60,7 +60,7 @@ The connector can be found under multiple names, but seem to be (clones of?) Fur
 - Battery side: `FW-C-6M-B` / `DJ7061Y-2.3-11`
 - Bike side: `FW-C-6F-B` / `DJ7061Y-2.3-21`
 
-The [wiring diagram](./docs/SR%20diagram%20AE%20bikes%20copy.pdf) is pretty helpful here (even though it only has the wire colors). Pin positions are given looking at the bike side connector from the back with the retention clip at the bottom (like in the picture above).
+The [wiring diagram](./docs/Surron_Wiring_Diagram_A_Ebikes.pdf) is pretty helpful here (even though it only has the wire colors). Pin positions are given looking at the bike side connector from the back with the retention clip at the bottom (like in the picture above).
 
 | Position | Color | Description | Connection |
 | --- | --- | --- | --- |
