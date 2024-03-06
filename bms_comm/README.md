@@ -4,7 +4,9 @@ RS485 communication is done at 9600 baud 8N1.
 
 All messages seem to have the same structure:
 - Command (`46` = request, `47` = response, `57` = unsolicited)
-- Address (4 bytes)
+- Address (2 bytes)
+- Parameter (1 byte)
+- Parameter length (1 byte)
 - Data (0 - n bytes)
 - Checksum (1 byte = sum of all previous bytes)
 
@@ -16,7 +18,7 @@ request for a value / list of values
 - byte 0: command
 - byte 1-2: address
 - byte 3: parameter
-- byte 4: read length
+- byte 4: data length
 - last byte: checksum 
 
 | cmd | addr | param | len | chk |
@@ -188,11 +190,11 @@ Battery percent? (`4B` => 75%)
 - `20`
 
 #### Explanation:
-possibly has something to do with config via brake switch:
+has something to do with config via brake switch:
 - normal:  `01` -> `08` -> `00`
-- regen 1: `01` -> `10` -> `20` -> `00`
-- regen 2: `01` -> `08` -> `10` -> `00`
-- regen 3: `01` -> `20` -> `08` -> `00`
+- regen 1 (unsure): `01` -> `10` -> `20` -> `00`
+- regen 2 (unsure): `01` -> `08` -> `10` -> `00`
+- regen 3 (unsure): `01` -> `20` -> `08` -> `00`
 
 (Plot of `output_2024-03-05_22-17-59_startup_regen_3.log`)
 ![](./plot_83014B02.png)
