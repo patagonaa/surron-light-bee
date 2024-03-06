@@ -73,14 +73,18 @@ The [wiring diagram](./docs/Surron_Wiring_Diagram_A_Ebikes.pdf) is pretty helpfu
 
 | Position | Color | Description | Connection |
 | --- | --- | --- | --- |
-| Top Center | Green | Ground | |
-| Bottom Left | Red-Black | 60V, possibly to turn the BMS into active/communication mode? | from ignition switch |
+| Top Center | Green | Ground (does not seem to be connected on battery side) | |
+| Bottom Left | Red-Black | 60V in (enables battery display) | from ignition switch |
 | Bottom Right | White-Red | RS485 A, data/programming/diagnostics | battery-controller-dashboard |
 | Top Right | White-Black | RS485 B, data/programming/diagnostics | battery-controller-dashboard |
 | Top Left | Black-Blue | Comms | battery-controller |
 | Bottom Center | Purple | Comms (missing pin on battery, used for diagnostics LED harness[^led-harness]) | battery-controller |
 
-Reverse engineering of the comms / RS485 protocol is left as an exercise for ~~the reader~~ future me.
+### RS485
+
+There is an internal RS485 bus between the battery, controller (ESC) and display. 
+
+Reverse engineering progress of the RS485 protocol is documented under [./bms_comm/README.md](./bms_comm/README.md).
 
 ### Headlights
 
