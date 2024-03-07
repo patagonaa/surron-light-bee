@@ -1,6 +1,6 @@
 # RS485 communication
 
-RS485 communication is done at 9600 baud 8N1.
+RS485 communication is done at 9600 baud 8N1. The battery always responds to requests, even when it is not actively enabled (using the 60V input).
 
 All messages seem to have the same structure:
 - Command (`46` = request, `47` = response, `57` = unsolicited)
@@ -12,6 +12,12 @@ All messages seem to have the same structure:
 
 Full message dumps of the bike (sniffed at the battery BMS connection) are available under `dumps`
 
+My theory is, that the controller/ESC is the bus controller (only bus member that can send without being asked to), the battery responds to requests and the display only reads.
+Points in case:
+- responses (`47`) stop when battery is detached (requests and unsolicited messages keep on going)
+- unsolicited messages (`57`) contain the data received in the responses with a slight delay
+- unsolicited messages (`57`) contain multiple parameters (like battery percentage, battery voltage, status, etc.), which suggest those messages are aimed at the display.
+
 ## Commands
 ## `46` (Request)
 request for a value / list of values
@@ -21,12 +27,12 @@ request for a value / list of values
 - byte 4: data length
 - last byte: checksum 
 
-| cmd | addr | param | len | chk |
-|---|---|---|---|---|
-|`46`|`1601`|`07`|`01`|`65`|
-|`46`|`1601`|`08`|`06`|`6B`|
-|`46`|`1601`|`09`|`04`|`6A`|
-|`46`|`1601`|`0D`|`01`|`6B`|
+| cmd  | addr   | param | len  | chk  |
+|------|--------|-------|------|------|
+| `46` | `1601` | `07`  | `01` | `65` |
+| `46` | `1601` | `08`  | `06` | `6B` |
+| `46` | `1601` | `09`  | `04` | `6A` |
+| `46` | `1601` | `0D`  | `01` | `6B` |
 
 ## `47` (Response)
 response to `46`
@@ -37,12 +43,12 @@ response to `46`
 - bytes n: data
 - last byte: checksum
 
-| cmd | addr | param | len | data | chk |
-|---|---|---|--- |---|---|
-|`47`|`1601`|`07`|`01`|`05`|`65`|
-|`47`|`1601`|`08`|`06`|`10100F001111`|`BD`|
-|`47`|`1601`|`09`|`04`|`6BF20000`|`C8`|
-|`47`|`1601`|`0D`|`01`|`4B`|`B7`|
+| cmd  | addr   | param | len  | data           | chk  |
+|------|--------|-------|------|----------------|------|
+| `47` | `1601` | `07`  | `01` | `05`           | `65` |
+| `47` | `1601` | `08`  | `06` | `10100F001111` | `BD` |
+| `47` | `1601` | `09`  | `04` | `6BF20000`     | `C8` |
+| `47` | `1601` | `0D`  | `01` | `4B`           | `B7` |
 
 ## `57` (Unsolicited Response)
 - byte 0: command
@@ -52,11 +58,11 @@ response to `46`
 - bytes n: data
 - last byte: checksum
 
-| cmd | addr | param | len | data | chk |
-|---|---|---|--- |---|---|
-|`57`|`8301`|`48`|`0C`|`0000000000000080000000`|`AF`|
-|`57`|`8301`|`48`|`0C`|`4B63F20000000080000000`|`4F`|
-|`57`|`8301`|`4B`|`02`|`00`|`28`|
+| cmd  | addr   | param | len  | data                     | chk  |
+|------|--------|-------|------|--------------------------|------|
+| `57` | `8301` | `48`  | `0C` | `0000000000000080000000` | `AF` |
+| `57` | `8301` | `48`  | `0C` | `4B63F20000000080000000` | `4F` |
+| `57` | `8301` | `4B`  | `02` | `00`                     | `28` |
 
 
 
@@ -90,7 +96,7 @@ response to `46`
 - `0F0F0F001111`
 
 #### Explanation:
-Maybe some sort of bootup counter? Too little info to be certain
+???
 
 
 ### 1601_09_04

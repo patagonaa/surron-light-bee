@@ -71,14 +71,14 @@ The connector can be found under multiple names, but seem to be (clones of?) Fur
 
 The [wiring diagram](./docs/Surron_Wiring_Diagram_A_Ebikes.pdf) is pretty helpful here (even though it only has the wire colors). Pin positions are given looking at the bike side connector from the back with the retention clip at the bottom (like in the picture above).
 
-| Position | Color | Description | Connection |
-| --- | --- | --- | --- |
-| Top Center | Green | Ground (does not seem to be connected on battery side) | |
-| Bottom Left | Red-Black | 60V in (enables battery display) | from ignition switch |
-| Bottom Right | White-Red | RS485 A, data/programming/diagnostics | battery-controller-dashboard |
-| Top Right | White-Black | RS485 B, data/programming/diagnostics | battery-controller-dashboard |
-| Top Left | Black-Blue | Comms | battery-controller |
-| Bottom Center | Purple | Comms (missing pin on battery, used for diagnostics LED harness[^led-harness]) | battery-controller |
+| Position      | Color       | Description                                                                    | Connection                   |
+|---------------|-------------|--------------------------------------------------------------------------------|------------------------------|
+| Top Center    | Green       | Ground (does not seem to be connected on battery side)                         |                              |
+| Bottom Left   | Red-Black   | 60V in (enables battery display)                                               | from ignition switch         |
+| Bottom Right  | White-Red   | RS485 A, data/programming/diagnostics                                          | battery-controller-dashboard |
+| Top Right     | White-Black | RS485 B, data/programming/diagnostics                                          | battery-controller-dashboard |
+| Top Left      | Black-Blue  | Comms                                                                          | battery-controller           |
+| Bottom Center | Purple      | Comms (missing pin on battery, used for diagnostics LED harness[^led-harness]) | battery-controller           |
 
 ### RS485
 
