@@ -12,6 +12,8 @@ All messages seem to have the same structure:
 
 Full message dumps of the bike (sniffed at the battery BMS connection) are available under `dumps`
 
+Example code to work with the Surron RS485 bus is available under `src`
+
 My theory is, that the controller/ESC is the bus controller (only bus member that can send without being asked to), the battery responds to requests and the display only reads.
 Points in case:
 - responses (`47`) stop when battery is detached (requests and unsolicited messages keep on going)
@@ -64,9 +66,50 @@ response to `46`
 | `57` | `8301` | `48`  | `0C` | `4B63F20000000080000000` | `4F` |
 | `57` | `8301` | `4B`  | `02` | `00`                     | `28` |
 
+## From BMS Responses
+Requested from battery with `461601XXXXXX`.
+
+Length can be set up to 64 (though param 160 only responds up to around 32), which returns more data than is actually in the field (it seems like it reads past its buffer and subsequent params are returned when doing so).
+
+Unknown lengths (marked with `?`) have been determined by counting bytes until the next param is returned.
+
+| param | len   | data                                                                  | desc                                           |
+|------:|-------|-----------------------------------------------------------------------|------------------------------------------------|
+|     0 | <=4?  | `46000000`                                                            | ?                                              |
+|     7 | 1     | `05`                                                                  | ? (read by ESC)                                |
+|     8 | 6     | `151515001515`                                                        | ? (read by ESC)                                |
+|     9 | 4     | `63F20000`                                                            | Battery Voltage (uint32 `63F20000` => 62.051V) |
+|    10 | <=4?  | `00000000`                                                            | ?                                              |
+|    13 | 1     | `4B`                                                                  | Battery Percent (`4B` => 75%)                  |
+|    14 | <=4?  | `64000000`                                                            | ?                                              |
+|    15 | <=4?  | `CA680000`                                                            | ?                                              |
+|    16 | <=4?  | `128B0000`                                                            | ?                                              |
+|    17 | <=2?  | `4000`                                                                | ?                                              |
+|    20 | <=4?  | `80027F32`                                                            | ?                                              |
+|    21 | ?     | `128B0000[...]`                                                       | ?                                              |
+|    22 | 9     | `E00300000000000000`                                                  | ? (read by ESC)                                |
+|    23 | <=4?  | `4E000000`                                                            | ?                                              |
+|    24 | <=4?  | `A4880000`                                                            | ?                                              |
+|    25 | <=4?  | `00E10000`                                                            | ?                                              |
+|    26 | <=8?  | `0E03000055343237`                                                    | ?                                              |
+|    27 | <=4?  | `16030100`                                                            | ?                                              |
+|    28 | <=4?  | `00000000`                                                            | ?                                              |
+|    29 | <=6?  | `180307062F02`                                                        | ?                                              |
+|    30 | <=6?  | `000071032201`                                                        | ?                                              |
+|    32 | <=16? | `475245454E5741590000000000000000`                                    | ?                                              |
+|    33 | <=32? | `444D3733313631310000000000000000` `00000000000000000000000000000000` | ?                                              |
+|    34 | <=16? | `4E435231383635304244000000000000`                                    | ?                                              |
+|    35 | <=32? | `30743138583036333131363930323232` `36000000000000000000000000000000` | ?                                              |
+|    36 | 32    | `280F230F230F230F230F280F290F290F` `280F290F270F290F290F2A0F270F2D0F` | Cell voltages (`280F` => 3.880V)               |
+|    37 | <=32? | `00000000000000000000000000000000` `00000000000000000000000000000000` | ?                                              |
+|    38 | <=14? | `4DA7FEFFF93C000080100C0C3302`                                        | ?                                              |
+|    39 | ?     | ?                                                                     | ?                                              |
+|    48 | ?     | ?                                                                     | ?                                              |
+|   120 | ?     | ?                                                                     | ?                                              |
+|   160 | ?     | ?                                                                     | ? (does not respond with length >32)           |
 
 
-## Fields
+## From Dumps
 
 ### 1601_07_01
 #### Request:
@@ -94,6 +137,8 @@ response to `46`
 - `10100F001111`
 - `0F100F001111`
 - `0F0F0F001111`
+- `151515001515`
+- `151515001616`
 
 #### Explanation:
 ???
@@ -146,6 +191,7 @@ Battery percent? (`4B` => 75%)
 
 #### Captured values:
 - `E00300000000000000`
+- `200000000000000000`
 
 #### Explanation:
 ???
