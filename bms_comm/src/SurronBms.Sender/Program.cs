@@ -28,13 +28,13 @@ namespace SurronBms.Sender
             {
                 (0, 4),
                 (7, 1),
-                (8, 6),
+                (8, 6), // temperatures
                 (9, 4), // battery voltage
-                (10, 4),
+                (10, 4), // battery current
                 (13, 1), // battery percent
                 (14, 4),
-                (15, 4),
-                (16, 4),
+                (15, 4), // current capacity
+                (16, 4), // total capacity
                 (17, 2),
                 (20, 4),
                 (21, 64), // length unknown
@@ -45,7 +45,7 @@ namespace SurronBms.Sender
                 (26, 8),
                 (27, 4),
                 (28, 4),
-                (29, 6),
+                (29, 6), // time
                 (30, 6),
                 (32, 16),
                 (33, 32),
@@ -57,8 +57,10 @@ namespace SurronBms.Sender
                 (39, 64), // length unknown
                 (48, 64), // length unknown
                 (120, 64), // length unknown
-                (160, 32) // length unknown
+                //(160, 32) // length unknown
             };
+
+            var registerValues = new Dictionary<byte, byte[]>();
 
             while (!cts.IsCancellationRequested)
             {
@@ -73,11 +75,26 @@ namespace SurronBms.Sender
                             registerValues[register] = response;
                             switch (register)
                             {
+                                case 8:
+                                    Console.WriteLine($"Temperatures: {string.Join(' ', response.Select(x => $"{(sbyte)x,3:0}°C"))}");
+                                    break;
                                 case 9:
                                     Console.WriteLine($"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000d:00.000}V");
                                     break;
+                                case 10:
+                                    Console.WriteLine($"Battery Current: {BinaryPrimitives.ReadInt32LittleEndian(response) / 1000d,8:#00.000}A");
+                                    break;
                                 case 13:
                                     Console.WriteLine($"Battery Percent: {response[0]}%");
+                                    break;
+                                case 15:
+                                    Console.WriteLine($"Current Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh");
+                                    break;
+                                case 16:
+                                    Console.WriteLine($"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh");
+                                    break;
+                                case 29:
+                                    Console.WriteLine($"Time: {new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]):s}");
                                     break;
                                 case 36:
                                     var voltages = new List<double>();
