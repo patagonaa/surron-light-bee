@@ -67,25 +67,30 @@ namespace SurronBms.Sender
                     try
                     {
                         var response = await ReadRegister(sp, bmsAddress, register, registerLength, cts.Token);
-                        switch (register)
+
+                        if (!registerValues.TryGetValue(register, out var oldValue) || !oldValue.SequenceEqual(response))
                         {
-                            case 9:
-                                Console.WriteLine($"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000d:00.000}V");
-                                break;
-                            case 13:
-                                Console.WriteLine($"Battery Percent: {response[0]}%");
-                                break;
-                            case 36:
-                                var voltages = new List<double>();
-                                for (int batIdx = 0; batIdx < 16; batIdx++)
-                                {
-                                    voltages.Add(BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(batIdx * 2, 2)) / 1000d);
-                                }
-                                Console.WriteLine($"Cell Voltages: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}");
-                                break;
-                            default:
-                                Console.WriteLine($"{register,3}: {HexUtils.BytesToHex(response)}");
-                                break;
+                            registerValues[register] = response;
+                            switch (register)
+                            {
+                                case 9:
+                                    Console.WriteLine($"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000d:00.000}V");
+                                    break;
+                                case 13:
+                                    Console.WriteLine($"Battery Percent: {response[0]}%");
+                                    break;
+                                case 36:
+                                    var voltages = new List<double>();
+                                    for (int batIdx = 0; batIdx < 16; batIdx++)
+                                    {
+                                        voltages.Add(BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(batIdx * 2, 2)) / 1000d);
+                                    }
+                                    Console.WriteLine($"Cell Voltages: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}");
+                                    break;
+                                default:
+                                    Console.WriteLine($"{register,3}: {HexUtils.BytesToHex(oldValue ?? [])} -> {HexUtils.BytesToHex(response)}");
+                                    break;
+                            }
                         }
 
                     }
