@@ -1,0 +1,21 @@
+﻿namespace SurronBms.Common
+{
+    public static class KnownBmsParameters
+    {
+        public static readonly ParameterDefinition Temperatures = new(8, 6);
+        public static readonly ParameterDefinition BatteryVoltage = new(9, 4);
+        public static readonly ParameterDefinition BatteryCurrent = new(10, 4);
+        public static readonly ParameterDefinition BatteryPercent = new(13, 1);
+        public static readonly ParameterDefinition BatteryHealth = new(14, 4);
+        public static readonly ParameterDefinition RemainingCapacity = new(15, 4);
+        public static readonly ParameterDefinition TotalCapacity = new(16, 4);
+        public static readonly ParameterDefinition ManufacturingDate = new(27, 3);
+        public static readonly ParameterDefinition RtcTime = new(29, 6);
+        public static readonly ParameterDefinition BmsManufacturer = new(32, 16);
+        public static readonly ParameterDefinition BatteryModel = new(33, 32);
+        public static readonly ParameterDefinition CellType = new(34, 16);
+        public static readonly ParameterDefinition SerialNumber = new(35, 32);
+        public static readonly ParameterDefinition CellVoltages = new(36, 32);
+        public static readonly ParameterDefinition HistoryValues = new(38, 14);
+    }
+}

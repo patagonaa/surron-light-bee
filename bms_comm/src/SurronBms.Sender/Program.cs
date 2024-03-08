@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO.Ports;
+using System.Text;
 
 namespace SurronBms.Sender
 {
@@ -24,40 +25,78 @@ namespace SurronBms.Sender
             sp.Open();
 
             const ushort bmsAddress = 0x116;
-            var registers = new List<(byte Register, byte RegisterLength)> 
+            var registers = new List<ParameterDefinition>
             {
-                (0, 4),
-                (7, 1),
-                (8, 6), // temperatures
-                (9, 4), // battery voltage
-                (10, 4), // battery current
-                (13, 1), // battery percent
-                (14, 4),
-                (15, 4), // current capacity
-                (16, 4), // total capacity
-                (17, 2),
-                (20, 4),
-                (21, 64), // length unknown
-                (22, 9),
-                (23, 4),
-                (24, 4),
-                (25, 4),
-                (26, 8),
-                (27, 4),
-                (28, 4),
-                (29, 6), // time
-                (30, 6),
-                (32, 16),
-                (33, 32),
-                (34, 16),
-                (35, 32),
-                (36, 32), // cell voltages
-                (37, 32),
-                (38, 14), // history values
-                (39, 64), // length unknown
-                (48, 64), // length unknown
-                (120, 64), // length unknown
-                //(160, 32) // length unknown
+                new(0, 4),
+                new(7, 1),
+                KnownBmsParameters.Temperatures,
+                KnownBmsParameters.BatteryVoltage,
+                KnownBmsParameters.BatteryCurrent,
+                KnownBmsParameters.BatteryPercent,
+                KnownBmsParameters.BatteryHealth,
+                KnownBmsParameters.RemainingCapacity,
+                KnownBmsParameters.TotalCapacity,
+                new(17, 2),
+                new(20, 4),
+                new(21, 64), // length unknown
+                new(22, 9),
+                new(23, 4),
+                new(24, 4),
+                new(25, 4),
+                new(26, 8),
+                KnownBmsParameters.ManufacturingDate,
+                new(28, 4),
+                KnownBmsParameters.RtcTime,
+                new(30, 6),
+                KnownBmsParameters.BmsManufacturer,
+                KnownBmsParameters.BatteryModel,
+                KnownBmsParameters.CellType,
+                KnownBmsParameters.SerialNumber,
+                KnownBmsParameters.CellVoltages,
+                new(37, 32),
+                KnownBmsParameters.HistoryValues,
+                new(39, 64), // length unknown
+                new(48, 64), // length unknown
+                new(120, 64), // length unknown
+                //new(160, 32) // length unknown
+            };
+
+            var registerFormatHandlers = new Dictionary<byte, Func<byte[], string>>
+            {
+                { KnownBmsParameters.Temperatures.Id, response => $"Temperatures: {string.Join(' ', response.Select(x => $"{(sbyte)x,3:0}°C"))}"},
+                { KnownBmsParameters.BatteryVoltage.Id, response => $"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
+                { KnownBmsParameters.BatteryCurrent.Id, response => $"Battery Current: {BinaryPrimitives.ReadInt32LittleEndian(response) / 1000m,8:#00.000}A"},
+                { KnownBmsParameters.BatteryPercent.Id, response => $"Battery Percent: {response[0]}%"},
+                { KnownBmsParameters.BatteryHealth.Id, response => $"Battery Health: {response[0]}%"},
+                { KnownBmsParameters.RemainingCapacity.Id, response => $"Remaining Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh"},
+                { KnownBmsParameters.TotalCapacity.Id, response => $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh"},
+                { KnownBmsParameters.ManufacturingDate.Id, response => $"Manufacturing Date: {new DateOnly(2000 + response[0], response[1], response[2]):yyyy'-'MM'-'dd}"},
+                { KnownBmsParameters.RtcTime.Id, response => $"RTC Time: {new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]):s}"},
+                { KnownBmsParameters.BmsManufacturer.Id, response => $"BMS Manufacturer: {AsciiToString(response)}" },
+                { KnownBmsParameters.BatteryModel.Id, response => $"Battery Model: {AsciiToString(response)}" },
+                { KnownBmsParameters.CellType.Id, response => $"Cell Type: {AsciiToString(response)}" },
+                { KnownBmsParameters.SerialNumber.Id, response => $"Serial Number: {AsciiToString(response)}" },
+                { KnownBmsParameters.CellVoltages.Id, response =>
+                    {
+                        var voltages = new List<decimal>();
+                        for (int batIdx = 0; batIdx < 16; batIdx++)
+                        {
+                            voltages.Add(BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(batIdx * 2, 2)) / 1000m);
+                        }
+                        return $"Cell Voltages: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}";
+                    }
+                },
+                { KnownBmsParameters.HistoryValues.Id, response =>
+                    {
+                        return
+                            $"OutMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(0, 4)) / 1000d,7:#00.000}A " +
+                            $"InMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(4, 4)) / 1000d,6:00.000}A " +
+                            $"MaxCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(8, 2)) / 1000d,5:0.000}V " +
+                            $"MinCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(10, 2)) / 1000d,5:0.000}V " +
+                            $"MaxTemp: {(sbyte)response[12],3}°C " +
+                            $"MinTemp: {(sbyte)response[13],3}°C";
+                    }
+                }
             };
 
             var registerValues = new Dictionary<byte, byte[]>();
@@ -73,48 +112,14 @@ namespace SurronBms.Sender
                         if (!registerValues.TryGetValue(register, out var oldValue) || !oldValue.SequenceEqual(response))
                         {
                             registerValues[register] = response;
-                            switch (register)
+
+                            if (registerFormatHandlers.TryGetValue(register, out var formatHandler))
                             {
-                                case 8:
-                                    Console.WriteLine($"Temperatures: {string.Join(' ', response.Select(x => $"{(sbyte)x,3:0}°C"))}");
-                                    break;
-                                case 9:
-                                    Console.WriteLine($"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000d:00.000}V");
-                                    break;
-                                case 10:
-                                    Console.WriteLine($"Battery Current: {BinaryPrimitives.ReadInt32LittleEndian(response) / 1000d,8:#00.000}A");
-                                    break;
-                                case 13:
-                                    Console.WriteLine($"Battery Percent: {response[0]}%");
-                                    break;
-                                case 15:
-                                    Console.WriteLine($"Current Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh");
-                                    break;
-                                case 16:
-                                    Console.WriteLine($"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh");
-                                    break;
-                                case 29:
-                                    Console.WriteLine($"Time: {new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]):s}");
-                                    break;
-                                case 36:
-                                    var voltages = new List<double>();
-                                    for (int batIdx = 0; batIdx < 16; batIdx++)
-                                    {
-                                        voltages.Add(BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(batIdx * 2, 2)) / 1000d);
-                                    }
-                                    Console.WriteLine($"Cell Voltages: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}");
-                                    break;
-                                case 38:
-                                    Console.WriteLine($"OutMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(0, 4)) / 1000d,7:#00.000}A, " +
-                                        $"InMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(4, 4)) / 1000d,6:00.000}A, " +
-                                        $"MaxCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(8, 2)) / 1000d,5:0.000}V, " +
-                                        $"MinCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(10, 2)) / 1000d,5:0.000}V " +
-                                        $"MaxTemp: {(sbyte)response[12],3}°C " +
-                                        $"MinTemp: {(sbyte)response[13],3}°C");
-                                    break;
-                                default:
-                                    Console.WriteLine($"{register,3}: {HexUtils.BytesToHex(oldValue ?? [])} -> {HexUtils.BytesToHex(response)}");
-                                    break;
+                                Console.WriteLine(formatHandler(response));
+                            }
+                            else
+                            {
+                                Console.WriteLine($"{register,3}: {HexUtils.BytesToHex(oldValue ?? [])} -> {HexUtils.BytesToHex(response)}");
                             }
                         }
 
@@ -130,6 +135,12 @@ namespace SurronBms.Sender
             }
 
             sp.Close();
+        }
+
+        private static string AsciiToString(byte[] bytes)
+        {
+            var nulIdx = Array.IndexOf<byte>(bytes, 0);
+            return Encoding.ASCII.GetString(bytes, 0, nulIdx > -1 ? nulIdx : bytes.Length);
         }
 
         private static async Task<byte[]> ReadRegister(SerialPort sp, ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken)
