@@ -38,10 +38,10 @@ namespace SurronBms.Sender
                 KnownBmsParameters.TotalCapacity,
                 new(17, 2),
                 new(20, 4),
-                new(21, 64), // length unknown
+                KnownBmsParameters.Statistics,
                 new(22, 9),
-                new(23, 4),
-                new(24, 4),
+                KnownBmsParameters.ChargeCycles,
+                KnownBmsParameters.DesignedCapacity,
                 new(25, 4),
                 new(26, 8),
                 KnownBmsParameters.ManufacturingDate,
@@ -68,10 +68,19 @@ namespace SurronBms.Sender
                 { KnownBmsParameters.Temperatures.Id, response => $"Temperatures: {string.Join(' ', response.Select(x => $"{(sbyte)x,3:0}°C"))}"},
                 { KnownBmsParameters.BatteryVoltage.Id, response => $"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
                 { KnownBmsParameters.BatteryCurrent.Id, response => $"Battery Current: {BinaryPrimitives.ReadInt32LittleEndian(response) / 1000m,8:#00.000}A"},
-                { KnownBmsParameters.BatteryPercent.Id, response => $"Battery Percent: {response[0]}%"},
-                { KnownBmsParameters.BatteryHealth.Id, response => $"Battery Health: {response[0]}%"},
-                { KnownBmsParameters.RemainingCapacity.Id, response => $"Remaining Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh"},
-                { KnownBmsParameters.TotalCapacity.Id, response => $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response),5}mAh"},
+                { KnownBmsParameters.BatteryPercent.Id, response => $"Battery Percent: {response[0],3}%"},
+                { KnownBmsParameters.BatteryHealth.Id, response => $"Battery Health: {response[0],3}%"},
+                { KnownBmsParameters.RemainingCapacity.Id, response => $"Remaining Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
+                { KnownBmsParameters.TotalCapacity.Id, response => $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
+                { KnownBmsParameters.Statistics.Id, response =>
+                {
+                    return
+                        $" Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,6:0.000}Ah " +
+                        $" Lifetime Charged Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(4, 4)) / 1000m,10:0.000}Ah " +
+                        $" Current Charge Session Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(8, 4)) / 1000m,6:0.000}Ah";
+                }},
+                { KnownBmsParameters.ChargeCycles.Id, response => $"Charge Cycles: {BinaryPrimitives.ReadUInt32LittleEndian(response),4}"},
+                { KnownBmsParameters.DesignedCapacity.Id, response => $"Designed Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
                 { KnownBmsParameters.ManufacturingDate.Id, response => $"Manufacturing Date: {new DateOnly(2000 + response[0], response[1], response[2]):yyyy'-'MM'-'dd}"},
                 { KnownBmsParameters.RtcTime.Id, response => $"RTC Time: {new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]):s}"},
                 { KnownBmsParameters.BmsManufacturer.Id, response => $"BMS Manufacturer: {AsciiToString(response)}" },
@@ -91,10 +100,10 @@ namespace SurronBms.Sender
                 { KnownBmsParameters.HistoryValues.Id, response =>
                     {
                         return
-                            $"OutMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(0, 4)) / 1000d,7:#00.000}A " +
-                            $"InMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(4, 4)) / 1000d,6:00.000}A " +
-                            $"MaxCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(8, 2)) / 1000d,5:0.000}V " +
-                            $"MinCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(10, 2)) / 1000d,5:0.000}V " +
+                            $"OutMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,7:#00.000}A " +
+                            $"InMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(4, 4)) / 1000m,6:00.000}A " +
+                            $"MaxCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(8, 2)) / 1000m,5:0.000}V " +
+                            $"MinCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(10, 2)) / 1000m,5:0.000}V " +
                             $"MaxTemp: {(sbyte)response[12],3}°C " +
                             $"MinTemp: {(sbyte)response[13],3}°C";
                     }

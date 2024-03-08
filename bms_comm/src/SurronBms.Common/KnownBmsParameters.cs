@@ -9,6 +9,9 @@
         public static readonly ParameterDefinition BatteryHealth = new(14, 4);
         public static readonly ParameterDefinition RemainingCapacity = new(15, 4);
         public static readonly ParameterDefinition TotalCapacity = new(16, 4);
+        public static readonly ParameterDefinition Statistics = new(21, 12);
+        public static readonly ParameterDefinition ChargeCycles = new(23, 4);
+        public static readonly ParameterDefinition DesignedCapacity = new(24, 4);
         public static readonly ParameterDefinition ManufacturingDate = new(27, 3);
         public static readonly ParameterDefinition RtcTime = new(29, 6);
         public static readonly ParameterDefinition BmsManufacturer = new(32, 16);
