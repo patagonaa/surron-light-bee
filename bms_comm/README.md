@@ -5,7 +5,7 @@ RS485 communication is done at 9600 baud 8N1. The battery always responds to req
 All messages seem to have the same structure:
 - Command (`46` = request, `47` = response, `57` = unsolicited)
 - Address (2 bytes)
-- Parameter (1 byte)
+- Parameter id (1 byte)
 - Parameter length (1 byte)
 - Data (0 - n bytes)
 - Checksum (1 byte = sum of all previous bytes)
@@ -68,12 +68,15 @@ response to `46`
 
 ## Parameter Reverse Engineering
 ### Bike (ESC) sniffing
-Some registers are requested from the BMS by the ESC:
-- 7 (?)
-- 8 (Temperatures)
-- 9 (Battery Voltage)
-- 13 (Battery Percent)
-- 22 (Status Flags??)
+Some parameters are requested from the BMS by the ESC:
+
+| param | meaning known? |
+|-------|----------------|
+| 7     |                |
+| 8     | x              |
+| 9     | x              |
+| 13    | x              |
+| 22    |                |
 
 ### BMS read brute force
 Just requesting from battery with `461601XXXXXX`.
@@ -88,6 +91,32 @@ There is an aftermarket ESC called "Torp TC500", which has the Surron RS485 comm
 There is an app that shows the battery parameters, so we can at least know which parameters there are (random screenshot from Google Images):
 
 <img src="./Torp-TC500-app-screenshot.jpg" width="200"></img>
+
+| Parameter Name                     | Parameter ID                    |
+|------------------------------------|---------------------------------|
+| RTC                                | 29                              |
+| Serial Number                      | 35                              |
+| Manufacturing Date                 | 27                              |
+| Hardware Version                   | ???                             |
+| Software Version                   | 26                              |
+| Full capacity                      | 16                              |
+| Remain capacity                    | 15                              |
+| Charging Cycles                    | 17/23???                        |
+| Estimated mileage                  | ???                             |
+| State of health                    | 14?                             |
+| Temperatures                       | 8 (exact mapping still unknown) |
+| Error/Warning Flags                | ???                             |
+| History (max/min temp, curr, volt) | 38                              |
+| Protection IC error counter        | ???                             |
+| Battery drop counter               | ???                             |
+
+### Greenway BMS App
+
+There is an Android app from the BMS manufacturer that can be found [here](https://imb.greenway-battery.com/assets/imb/page/download.html) (Direct link!).
+
+The Surron BMS does not have Bluetooth so it can't be used with the app, however the protocol / fields are probably similar.
+
+A decompiled version of the function where the bytes are decoded can be found in [Greenway_App_Parser.java](./Greenway_App_Parser.java)
 
 ## Parameter Map
 
@@ -112,7 +141,7 @@ Unsure lengths/descriptions are marked with `?`. More question marks = more unce
 |    24 | <=4?  | `A4880000`                                                         | ?                                                      |
 |    25 | <=4?  | `00E10000`                                                         | ?                                                      |
 |    26 | <=8?  | `0E03000055343237`                                                 | Software Version? (`0E` `03` => 3.14)                  |
-|    27 | 3     | `160301`                                                           | Manufacture Date? (2022-03-01)                         |
+|    27 | 3     | `160301`                                                           | Manufacture Date (2022-03-01)                          |
 |    28 | <=4?  | `00000000`                                                         | ?                                                      |
 |    29 | 6     | `180307062F02`                                                     | RTC time (`180307062F02` => 2024-03-07T06:47:02)       |
 |    30 | <=6?  | `000071032201`/`000071032301`                                      | ?                                                      |
