@@ -58,8 +58,10 @@ namespace SurronBms.Sender
                 new(39, 64), // length unknown
                 new(48, 64), // length unknown
                 new(120, 64), // length unknown
-                //new(160, 32) // length unknown
+                new(160, 32) // length unknown
             };
+
+            using var logger = new Logger();
 
             var registerFormatHandlers = new Dictionary<byte, Func<byte[], string>>
             {
@@ -103,6 +105,7 @@ namespace SurronBms.Sender
 
             while (!cts.IsCancellationRequested)
             {
+                logger.WriteLine($"{DateTime.Now:s}:");
                 foreach (var (register, registerLength) in registers)
                 {
                     try
@@ -115,26 +118,66 @@ namespace SurronBms.Sender
 
                             if (registerFormatHandlers.TryGetValue(register, out var formatHandler))
                             {
-                                Console.WriteLine(formatHandler(response));
+                                logger.WriteLine(formatHandler(response));
                             }
                             else
                             {
-                                Console.WriteLine($"{register,3}: {HexUtils.BytesToHex(oldValue ?? [])} -> {HexUtils.BytesToHex(response)}");
+                                logger.Write($"{register,3}: ");
+                                for (var i = 0; i < response.Length; i++)
+                                {
+                                    logger.Write(response[i].ToString("X2"), oldValue != null && oldValue[i] != response[i]);
+                                }
+                                logger.WriteLine();
                             }
                         }
 
                     }
                     catch (TimeoutException)
                     {
-                        Console.WriteLine($"{register}: <Timeout>");
+                        logger.WriteLine($"{register}: <Timeout>");
                     }
                 }
-
-                Console.WriteLine();
+                logger.WriteLine();
                 await Task.Delay(1000);
             }
 
             sp.Close();
+        }
+
+        private class Logger : IDisposable
+        {
+            private readonly StreamWriter _fileWriter;
+
+            public Logger()
+            {
+                _fileWriter = new StreamWriter(File.Open($"Log_{DateTime.Now:yyyy'-'MM'-'dd'_'HH'-'mm'-'ss}.log", FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+            }
+
+            public void Write(string text, bool highlight = false)
+            {
+                if (highlight)
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.BackgroundColor = ConsoleColor.Green;
+                }
+                Console.Write(text);
+                if (highlight)
+                    Console.ResetColor();
+                _fileWriter.Write(text);
+                _fileWriter.Flush();
+            }
+
+            public void WriteLine(string text = "")
+            {
+                Console.WriteLine(text);
+                _fileWriter.WriteLine(text);
+                _fileWriter.Flush();
+            }
+
+            public void Dispose()
+            {
+                _fileWriter.Dispose();
+            }
         }
 
         private static string AsciiToString(byte[] bytes)
