@@ -123,9 +123,9 @@ Unsure lengths/descriptions are marked with `?`. More question marks = more unce
 |    36 | 32    | `280F230F230F230F230F280F290F290F280F290F270F290F290F2A0F270F2D0F` | Cell voltages (`280F` uint16/1000 => 3.880V)           |
 |    37 | <=32? | `0000000000000000000000000000000000000000000000000000000000000000` | ?                                                      |
 |    38 | 14    | `4DA7FEFFF93C000080100C0C3302`                                     | History (see [below](#history-bytes))                  |
-|    39 | ???   | ?                                                                  | ?                                                      |
-|    48 | ???   | ?                                                                  | ?                                                      |
-|   120 | ???   | ?                                                                  | ?                                                      |
+|    39 | ???   | `FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0200FFFFFFFFFFFFFFFFFFFF0900FFFF` | ?                                                      |
+|    48 | ???   | `0000000000000000000000000000000000000000000000000000000000000000` | ?                                                      |
+|   120 | ???   | `0000000000000000000000000000000000000000000000000000000000000000` | ?                                                      |
 |   160 | ???   | `20000000000000004B647AF20000F0FFFFFF1515161600004E00000000000000` | ? (does not respond with length >32)                   |
 
 ### History Bytes
