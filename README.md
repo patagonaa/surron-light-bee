@@ -1,5 +1,5 @@
 # Surron Light Bee / Firefly
-Information about the Surron Light Bee / Firefly and its components. These are compiled for the stock 2022 L1e version, however most probably applies to all models.
+Information about the Surron Light Bee / Firefly and its components. These are compiled for the stock 2022 L1e version, however most probably applies to all models (including the Segway X260, possibly partially the Segway X160 too).
 
 Official documentation:
 - [Error/Diagnostic codes](./docs/Diagnostic_chart_X_Series_lead_LED.pdf)
