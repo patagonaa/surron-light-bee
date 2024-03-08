@@ -66,48 +66,76 @@ response to `46`
 | `57` | `8301` | `48`  | `0C` | `4B63F20000000080000000` | `4F` |
 | `57` | `8301` | `4B`  | `02` | `00`                     | `28` |
 
-## From BMS Responses
-Requested from battery with `461601XXXXXX`.
+## Parameter Reverse Engineering
+### Bike (ESC) sniffing
+Some registers are requested from the BMS by the ESC:
+- 7 (?)
+- 8 (Temperatures)
+- 9 (Battery Voltage)
+- 13 (Battery Percent)
+- 22 (Status Flags??)
+
+### BMS read brute force
+Just requesting from battery with `461601XXXXXX`.
 
 Length can be set up to 64 (though param 160 only responds up to around 32), which returns more data than is actually in the field (it seems like it reads past its buffer and subsequent params are returned when doing so).
 
-Unknown lengths (marked with `?`) have been determined by counting bytes until the next param is returned.
+Lengths can be determined somewhat by counting bytes until the next param is returned.
 
-| param | len   | data                                                               | desc                                             | read by esc |
-|------:|-------|--------------------------------------------------------------------|--------------------------------------------------|-------------|
-|     0 | <=4?  | `46000000`                                                         | ?                                                |             |
-|     7 | 1     | `05`                                                               | ?                                                | x           |
-|     8 | 6     | `10100F001111`/`151515001515`/`161616001B1B`/`161716001B1B`        | Temperatures (`161716001B1B` => 22°C, 23°C, ...) | x           |
-|     9 | 4     | `63F20000`                                                         | Battery Voltage (uint32 `63F20000` => 62.051V)   | x           |
-|    10 | 4     | `00000000`/`10000000`/`F0FFFFFF`/`B7FAFFFF`                        | Battery Current (int32 `B7FAFFFF` => -1.353A)    |             |
-|    13 | 1     | `4B`                                                               | Battery Percent (`4B` => 75%)                    | x           |
-|    14 | <=4?  | `64000000`                                                         | ?                                                |             |
-|    15 | 4     | `CA680000`                                                         | Current Capacity (uint32 `13680000` => 26643mAh) |             |
-|    16 | 4     | `128B0000`                                                         | Total Capacity? (uint32 `128B0000` => 35602mAh)  |             |
-|    17 | <=2?  | `4000`                                                             | ?                                                |             |
-|    20 | <=4?  | `80027F32`                                                         | ?                                                |             |
-|    21 | ?     | `128B0000[...]`                                                    | ?                                                |             |
-|    22 | 9     | `E00300000000000000`/`200000000000000000`                          | ?                                                | x           |
-|    23 | <=4?  | `4E000000`                                                         | ?                                                |             |
-|    24 | <=4?  | `A4880000`                                                         | ?                                                |             |
-|    25 | <=4?  | `00E10000`                                                         | ?                                                |             |
-|    26 | <=8?  | `0E03000055343237`                                                 | ?                                                |             |
-|    27 | <=4?  | `16030100`                                                         | ?                                                |             |
-|    28 | <=4?  | `00000000`                                                         | ?                                                |             |
-|    29 | 6     | `180307062F02`                                                     | RTC time (`180307062F02` => 2024-03-07T06:47:02) |             |
-|    30 | <=6?  | `000071032201`/`000071032301`                                      | ?                                                |             |
-|    32 | <=16? | `475245454E5741590000000000000000`                                 | ?                                                |             |
-|    33 | <=32? | `444D373331363131000000000000000000000000000000000000000000000000` | ?                                                |             |
-|    34 | <=16? | `4E435231383635304244000000000000`                                 | ?                                                |             |
-|    35 | <=32? | `3074313858303633313136393032323236000000000000000000000000000000` | ?                                                |             |
-|    36 | 32    | `280F230F230F230F230F280F290F290F280F290F270F290F290F2A0F270F2D0F` | Cell voltages (`280F` => 3.880V)                 |             |
-|    37 | <=32? | `0000000000000000000000000000000000000000000000000000000000000000` | ?                                                |             |
-|    38 | <=14? | `4DA7FEFFF93C000080100C0C3302`                                     | ?                                                |             |
-|    39 | ?     | ?                                                                  | ?                                                |             |
-|    48 | ?     | ?                                                                  | ?                                                |             |
-|   120 | ?     | ?                                                                  | ?                                                |             |
-|   160 | ?     | ?                                                                  | ? (does not respond with length >32)             |             |
+### Torp TC500
+There is an aftermarket ESC called "Torp TC500", which has the Surron RS485 communication implemented.
 
+There is an app that shows the battery parameters, so we can at least know which parameters there are (random screenshot from Google Images):
+
+<img src="./Torp-TC500-app-screenshot.jpg" width="200"></img>
+
+## Parameter Map
+
+Unsure lengths/descriptions are marked with `?`. More question marks = more uncertainty.
+
+| param | len   | data                                                               | desc                                                   |
+|------:|-------|--------------------------------------------------------------------|--------------------------------------------------------|
+|     0 | <=4?  | `46000000`                                                         | ?                                                      |
+|     7 | 1     | `05`                                                               | ?                                                      |
+|     8 | 6     | `10100F001111`/`151515001515`/`161616001B1B`/`161716001B1B`        | Temperatures (`161716001B1B` sbyte => 22°C, 23°C, ...) |
+|     9 | 4     | `63F20000`                                                         | Battery Voltage (`63F20000` uint32/1000 => 62.051V)    |
+|    10 | 4     | `00000000`/`10000000`/`F0FFFFFF`/`B7FAFFFF`                        | Battery Current (`B7FAFFFF` int32/1000 => -1.353A)     |
+|    13 | 1     | `4B`                                                               | Battery Percent (`4B` => 75%)                          |
+|    14 | <=4?  | `64000000`                                                         | Battery Health? (`64` => 100%)                         |
+|    15 | 4     | `CA680000`                                                         | Remaining Capacity (`13680000` uint32 => 26643mAh)     |
+|    16 | 4     | `128B0000`                                                         | Total Capacity? (`128B0000` uint32 => 35602mAh)        |
+|    17 | <=2?  | `4000`                                                             | Charging Cycles??? (`4000` uint16 => 64)               |
+|    20 | <=4?  | `80027F32`                                                         | ?                                                      |
+|    21 | ???   | `128B0000[...]`                                                    | ?                                                      |
+|    22 | 9     | `E00300000000000000`/`200000000000000000`                          | Status flags??                                         |
+|    23 | <=4?  | `4E000000`                                                         | Charging Cycles??? (`4E000000` uint32 => 78)           |
+|    24 | <=4?  | `A4880000`                                                         | ?                                                      |
+|    25 | <=4?  | `00E10000`                                                         | ?                                                      |
+|    26 | <=8?  | `0E03000055343237`                                                 | Software Version? (`0E` `03` => 3.14)                  |
+|    27 | 3     | `160301`                                                           | Manufacture Date? (2022-03-01)                         |
+|    28 | <=4?  | `00000000`                                                         | ?                                                      |
+|    29 | 6     | `180307062F02`                                                     | RTC time (`180307062F02` => 2024-03-07T06:47:02)       |
+|    30 | <=6?  | `000071032201`/`000071032301`                                      | ?                                                      |
+|    32 | <=16? | `475245454E5741590000000000000000`                                 | BMS Manufacturer (ASCII "GREENWAY")                    |
+|    33 | <=32? | `444D373331363131000000000000000000000000000000000000000000000000` | Battery Model? (ASCII "DM731611")                      |
+|    34 | <=16? | `4E435231383635304244000000000000`                                 | Cell Type (ASCII "NCR18650BD")                         |
+|    35 | <=32? | `3074313858303633313136393032323236000000000000000000000000000000` | Serial Number (ASCII "0t18X063116902226")              |
+|    36 | 32    | `280F230F230F230F230F280F290F290F280F290F270F290F290F2A0F270F2D0F` | Cell voltages (`280F` uint16/1000 => 3.880V)           |
+|    37 | <=32? | `0000000000000000000000000000000000000000000000000000000000000000` | ?                                                      |
+|    38 | 14    | `4DA7FEFFF93C000080100C0C3302`                                     | History (see [below](#history-bytes))                  |
+|    39 | ???   | ?                                                                  | ?                                                      |
+|    48 | ???   | ?                                                                  | ?                                                      |
+|   120 | ???   | ?                                                                  | ?                                                      |
+|   160 | ???   | `20000000000000004B647AF20000F0FFFFFF1515161600004E00000000000000` | ? (does not respond with length >32)                   |
+
+### History Bytes
+Example: `4DA7FEFFF93C000080100C0C3302`
+- byte 0-3: `4DA7FEFF` int32/1000 => -88.243A (Max Discharge Current)
+- byte 4-7: `F93C0000` int32/1000 => 15.609A (Max Charge Current)
+- byte 8-9: `8010` uint16/1000 => 4.224V (Max Cell Voltage)
+- byte 10-11: `0C0C` uint16/1000 => 3.084V (Min Cell Voltage)
+- byte 12: `33` sbyte => 51°C (Max Temperature)
+- byte 13: `02` sbyte => 2°C (Min Temperature)
 
 ## From Dumps
 

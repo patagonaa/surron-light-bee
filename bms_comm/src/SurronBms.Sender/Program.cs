@@ -53,7 +53,7 @@ namespace SurronBms.Sender
                 (35, 32),
                 (36, 32), // cell voltages
                 (37, 32),
-                (38, 14),
+                (38, 14), // history values
                 (39, 64), // length unknown
                 (48, 64), // length unknown
                 (120, 64), // length unknown
@@ -103,6 +103,14 @@ namespace SurronBms.Sender
                                         voltages.Add(BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(batIdx * 2, 2)) / 1000d);
                                     }
                                     Console.WriteLine($"Cell Voltages: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}");
+                                    break;
+                                case 38:
+                                    Console.WriteLine($"OutMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(0, 4)) / 1000d,7:#00.000}A, " +
+                                        $"InMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(4, 4)) / 1000d,6:00.000}A, " +
+                                        $"MaxCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(8, 2)) / 1000d,5:0.000}V, " +
+                                        $"MinCell: {BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(10, 2)) / 1000d,5:0.000}V " +
+                                        $"MaxTemp: {(sbyte)response[12],3}°C " +
+                                        $"MinTemp: {(sbyte)response[13],3}°C");
                                     break;
                                 default:
                                     Console.WriteLine($"{register,3}: {HexUtils.BytesToHex(oldValue ?? [])} -> {HexUtils.BytesToHex(response)}");
