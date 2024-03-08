@@ -27,6 +27,12 @@ Tire spec is `70/100-19 41N TT` / `2.5-19 41N TT` and the stock tires are either
 
 ## Electronics
 
+### RS485 Bus
+
+There is an internal RS485 bus between the battery, controller (ESC) and display.
+
+Reverse engineering progress of the RS485 protocol is documented under [./bms_comm/README.md](./bms_comm/README.md).
+
 ### Battery
 
 "60V nominal", 16S11P, Panasonic NCR18650PF cells[^forum-manual]. These would allow up to 21A charge and 90A discharge current.
@@ -79,12 +85,6 @@ The [wiring diagram](./docs/Surron_Wiring_Diagram_A_Ebikes.pdf) is pretty helpfu
 | Top Right     | White-Black | RS485 B, data/programming/diagnostics                                          | battery-controller-dashboard |
 | Top Left      | Black-Blue  | Comms                                                                          | battery-controller           |
 | Bottom Center | Purple      | Comms (missing pin on battery, used for diagnostics LED harness[^led-harness]) | battery-controller           |
-
-### RS485
-
-There is an internal RS485 bus between the battery, controller (ESC) and display. 
-
-Reverse engineering progress of the RS485 protocol is documented under [./bms_comm/README.md](./bms_comm/README.md).
 
 ### Headlights
 
