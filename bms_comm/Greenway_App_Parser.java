@@ -1,3 +1,151 @@
+// from d.java
+public boolean a(ArrayList<byte[]> arrayList) {
+        int i2;
+        int i3;
+        try {
+            this.P.setTs(n.a(new Date()));
+            this.P.setBtid(MainActivity.q);
+            this.P.setBtname(MainActivity.p);
+            f a2 = f.a();
+            a2.a(arrayList.get(0)[0]);
+            a2.b(arrayList.get(0)[1]);
+            a2.c(arrayList.get(0)[2]);
+            a2.d(arrayList.get(0)[3]);
+            a2.e(arrayList.get(0)[4]);
+            a2.f(arrayList.get(0)[5]);
+            a2.g(arrayList.get(0)[6]);
+            this.P.setCell_temp1(Integer.valueOf(arrayList.get(0)[0]));
+            this.P.setCell_temp2(Integer.valueOf(arrayList.get(0)[1]));
+            this.P.setCell_temp3(Integer.valueOf(arrayList.get(0)[2]));
+            this.P.setMos_temp(Integer.valueOf(arrayList.get(0)[4]));
+            this.P.setPre_dsg_temp(Integer.valueOf(arrayList.get(0)[6]));
+            this.P.setPre_dsg_temp(Integer.valueOf(arrayList.get(0)[7]));
+            byte b2 = ((arrayList.get(1)[3] << 24) & -1) | (arrayList.get(1)[0] & 255) | ((arrayList.get(1)[1] << 8) & 65535) | ((arrayList.get(1)[2] << 16) & 16777215);
+            a2.a((int) b2);
+            this.P.setPack_voltage(Integer.valueOf(b2));
+            byte b3 = (arrayList.get(2)[0] & 255) | ((arrayList.get(2)[1] << 8) & 65535) | ((arrayList.get(2)[2] << 16) & 16777215) | ((arrayList.get(2)[3] << 24) & -1);
+            a2.b((int) ((arrayList.get(2)[3] << 24) & -1) | (arrayList.get(2)[0] & 255) | ((arrayList.get(2)[1] << 8) & 65535) | ((arrayList.get(2)[2] << 16) & 16777215));
+            this.P.setPack_current(Integer.valueOf(b3));
+            a2.a((float) (arrayList.get(3)[0] & 255));
+            this.P.setSoc(Integer.valueOf(arrayList.get(3)[0] & 255));
+            a2.b((float) (arrayList.get(4)[0] & 255));
+            this.P.setSoh(Integer.valueOf(arrayList.get(4)[0] & 255));
+            a2.c((int) ((arrayList.get(5)[3] << 24) & -1) | (arrayList.get(5)[0] & 255) | ((arrayList.get(5)[1] << 8) & 65535) | ((arrayList.get(5)[2] << 16) & 16777215));
+            this.P.setRemain_cap(Integer.valueOf(((arrayList.get(5)[3] << 24) & -1) | (arrayList.get(5)[0] & 255) | ((arrayList.get(5)[1] << 8) & 65535) | ((arrayList.get(5)[2] << 16) & 16777215)));
+            a2.d((int) ((arrayList.get(6)[3] << 24) & -1) | (arrayList.get(6)[0] & 255) | ((arrayList.get(6)[1] << 8) & 65535) | ((arrayList.get(6)[2] << 16) & 16777215));
+            this.P.setFcc(Integer.valueOf(((arrayList.get(6)[3] << 24) & -1) | (arrayList.get(6)[0] & 255) | ((arrayList.get(6)[1] << 8) & 65535) | ((arrayList.get(6)[2] << 16) & 16777215)));
+            a2.e((arrayList.get(7)[0] >> 6) & 1);
+            a2.f((arrayList.get(7)[0] >> 7) & 1);
+            this.O.b(arrayList.get(7));
+            this.P.setBms_status(arrayList.get(7));
+            a2.a(new g().a((Context) getActivity(), arrayList.get(7)));
+            a2.b(new g().b((Context) getActivity(), arrayList.get(7)));
+            a2.h(((arrayList.get(8)[3] << 24) & -1) | (arrayList.get(8)[0] & 255) | ((arrayList.get(8)[1] << 8) & 65535) | ((arrayList.get(8)[2] << 16) & 16777215));
+            this.P.setCycle_count(Integer.valueOf(((arrayList.get(8)[3] << 24) & -1) | (arrayList.get(8)[0] & 255) | ((arrayList.get(8)[1] << 8) & 65535) | ((arrayList.get(8)[2] << 16) & 16777215)));
+            try {
+                String str = new String(Arrays.copyOfRange(arrayList.get(9), 4, 8), "ASCII");
+                a2.a(str);
+                this.P.setIdx(str);
+            } catch (UnsupportedEncodingException e2) {
+            }
+            try {
+                String trim = k.a(new String(Arrays.copyOfRange(arrayList.get(10), 0, 32), "ASCII")).trim();
+                a2.e(trim);
+                this.P.setSn(trim);
+            } catch (UnsupportedEncodingException e3) {
+            }
+            HashMap hashMap = new HashMap(33);
+            HashMap hashMap2 = new HashMap(33);
+            for (int i4 = 0; i4 < 16; i4++) {
+                hashMap.put(Integer.valueOf(i4), Integer.valueOf(((arrayList.get(11)[(i4 * 2) + 1] << 8) & 65535) | (arrayList.get(11)[i4 * 2] & 255)));
+            }
+            for (int i5 = 0; i5 < 16; i5++) {
+                hashMap.put(Integer.valueOf(i5 + 16), Integer.valueOf(((arrayList.get(12)[(i5 * 2) + 1] << 8) & 65535) | (arrayList.get(12)[i5 * 2] & 255)));
+            }
+            int i6 = 31;
+            while (true) {
+                if (i6 <= 0) {
+                    i2 = 0;
+                    break;
+                } else if (((Integer) hashMap.get(Integer.valueOf(i6))).intValue() > 0) {
+                    i2 = i6 + 1;
+                    break;
+                } else {
+                    i6--;
+                }
+            }
+            for (int i7 = 0; i7 < i2; i7++) {
+                hashMap2.put(Integer.valueOf(i7), hashMap.get(Integer.valueOf(i7)));
+            }
+            for (int i8 = 0; i8 < hashMap2.size(); i8++) {
+                if (i8 == 0) {
+                    this.P.setCv1((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 1) {
+                    this.P.setCv2((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 2) {
+                    this.P.setCv3((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 3) {
+                    this.P.setCv4((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 4) {
+                    this.P.setCv5((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 5) {
+                    this.P.setCv6((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 6) {
+                    this.P.setCv7((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 7) {
+                    this.P.setCv8((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 8) {
+                    this.P.setCv9((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 9) {
+                    this.P.setCv10((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 10) {
+                    this.P.setCv11((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 11) {
+                    this.P.setCv12((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 12) {
+                    this.P.setCv13((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 13) {
+                    this.P.setCv14((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 14) {
+                    this.P.setCv15((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 15) {
+                    this.P.setCv16((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 16) {
+                    this.P.setCv17((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 17) {
+                    this.P.setCv18((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 18) {
+                    this.P.setCv19((Integer) hashMap2.get(Integer.valueOf(i8)));
+                } else if (i8 == 19) {
+                    this.P.setCv20((Integer) hashMap2.get(Integer.valueOf(i8)));
+                }
+            }
+            int intValue = ((Integer) hashMap2.get(0)).intValue();
+            int i9 = 0;
+            int i10 = 0;
+            while (i9 < hashMap2.size() - 1) {
+                if (((Integer) hashMap2.get(Integer.valueOf(i9))).intValue() > i10) {
+                    i10 = ((Integer) hashMap2.get(Integer.valueOf(i9))).intValue();
+                }
+                if (((Integer) hashMap2.get(Integer.valueOf(i9))).intValue() < intValue) {
+                    i3 = ((Integer) hashMap2.get(Integer.valueOf(i9))).intValue();
+                } else {
+                    i3 = intValue;
+                }
+                i9++;
+                intValue = i3;
+            }
+            this.P.setMax_cv(Integer.valueOf(i10));
+            this.P.setMin_cv(Integer.valueOf(intValue));
+            this.P.setMm_cv(Integer.valueOf(i10 - intValue));
+            return true;
+        } catch (Exception e4) {
+            e4.printStackTrace();
+            return false;
+        }
+    }
+
+// from ConfigActivity.java
 public void a(byte[] bArr) {
     String str;
     try {

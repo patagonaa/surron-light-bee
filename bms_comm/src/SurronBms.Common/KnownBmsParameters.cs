@@ -2,7 +2,7 @@
 {
     public static class KnownBmsParameters
     {
-        public static readonly ParameterDefinition Temperatures = new(8, 6);
+        public static readonly ParameterDefinition Temperatures = new(8, 8);
         public static readonly ParameterDefinition BatteryVoltage = new(9, 4);
         public static readonly ParameterDefinition BatteryCurrent = new(10, 4);
         public static readonly ParameterDefinition BatteryPercent = new(13, 1);
@@ -10,6 +10,7 @@
         public static readonly ParameterDefinition RemainingCapacity = new(15, 4);
         public static readonly ParameterDefinition TotalCapacity = new(16, 4);
         public static readonly ParameterDefinition Statistics = new(21, 12);
+        public static readonly ParameterDefinition BmsStatus = new (22, 10);
         public static readonly ParameterDefinition ChargeCycles = new(23, 4);
         public static readonly ParameterDefinition DesignedCapacity = new(24, 4);
         public static readonly ParameterDefinition DesignedVoltage = new(25, 4);

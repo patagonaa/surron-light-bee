@@ -39,7 +39,7 @@ namespace SurronBms.Sender
                 new(17, 2),
                 new(20, 4),
                 KnownBmsParameters.Statistics,
-                new(22, 9),
+                KnownBmsParameters.BmsStatus,
                 KnownBmsParameters.ChargeCycles,
                 KnownBmsParameters.DesignedCapacity,
                 KnownBmsParameters.DesignedVoltage,
@@ -65,7 +65,7 @@ namespace SurronBms.Sender
 
             var registerFormatHandlers = new Dictionary<byte, Func<byte[], string>>
             {
-                { KnownBmsParameters.Temperatures.Id, response => $"Temperatures: {string.Join(' ', response.Select(x => $"{(sbyte)x,3:0}°C"))}"},
+                { KnownBmsParameters.Temperatures.Id, response => $"Temperatures: Cells: {string.Join(' ', response[0..3].Select(x => $"{(sbyte)x,3:0}°C"))} Discharge FET: {(sbyte)response[4],3:0}°C Charge FET: {(sbyte)response[5],3:0}°C Soft Start Circuit: {(sbyte)response[6],3:0}°C"},
                 { KnownBmsParameters.BatteryVoltage.Id, response => $"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
                 { KnownBmsParameters.BatteryCurrent.Id, response => $"Battery Current: {BinaryPrimitives.ReadInt32LittleEndian(response) / 1000m,8:#00.000}A"},
                 { KnownBmsParameters.BatteryPercent.Id, response => $"Battery Percent: {response[0],3}%"},
