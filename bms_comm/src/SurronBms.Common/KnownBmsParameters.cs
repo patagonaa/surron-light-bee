@@ -12,6 +12,8 @@
         public static readonly ParameterDefinition Statistics = new(21, 12);
         public static readonly ParameterDefinition ChargeCycles = new(23, 4);
         public static readonly ParameterDefinition DesignedCapacity = new(24, 4);
+        public static readonly ParameterDefinition DesignedVoltage = new(25, 4);
+        public static readonly ParameterDefinition Versions = new(26, 8);
         public static readonly ParameterDefinition ManufacturingDate = new(27, 3);
         public static readonly ParameterDefinition RtcTime = new(29, 6);
         public static readonly ParameterDefinition BmsManufacturer = new(32, 16);

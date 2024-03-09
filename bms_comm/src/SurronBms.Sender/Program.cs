@@ -42,8 +42,8 @@ namespace SurronBms.Sender
                 new(22, 9),
                 KnownBmsParameters.ChargeCycles,
                 KnownBmsParameters.DesignedCapacity,
-                new(25, 4),
-                new(26, 8),
+                KnownBmsParameters.DesignedVoltage,
+                KnownBmsParameters.Versions,
                 KnownBmsParameters.ManufacturingDate,
                 new(28, 4),
                 KnownBmsParameters.RtcTime,
@@ -81,6 +81,8 @@ namespace SurronBms.Sender
                 }},
                 { KnownBmsParameters.ChargeCycles.Id, response => $"Charge Cycles: {BinaryPrimitives.ReadUInt32LittleEndian(response),4}"},
                 { KnownBmsParameters.DesignedCapacity.Id, response => $"Designed Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
+                { KnownBmsParameters.DesignedVoltage.Id, response => $"Designed Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
+                { KnownBmsParameters.Versions.Id, response => $"SW Version: {new Version(response[1], response[0])} HW Version: {new Version(response[3], response[2])} IDX: {AsciiToString(response.AsSpan(4, 4))}"},
                 { KnownBmsParameters.ManufacturingDate.Id, response => $"Manufacturing Date: {new DateOnly(2000 + response[0], response[1], response[2]):yyyy'-'MM'-'dd}"},
                 { KnownBmsParameters.RtcTime.Id, response => $"RTC Time: {new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]):s}"},
                 { KnownBmsParameters.BmsManufacturer.Id, response => $"BMS Manufacturer: {AsciiToString(response)}" },
@@ -189,10 +191,10 @@ namespace SurronBms.Sender
             }
         }
 
-        private static string AsciiToString(byte[] bytes)
+        private static string AsciiToString(Span<byte> bytes)
         {
-            var nulIdx = Array.IndexOf<byte>(bytes, 0);
-            return Encoding.ASCII.GetString(bytes, 0, nulIdx > -1 ? nulIdx : bytes.Length);
+            var nulIdx = bytes.IndexOf<byte>(0);
+            return Encoding.ASCII.GetString(bytes.Slice(0, nulIdx > -1 ? nulIdx : bytes.Length));
         }
 
         private static async Task<byte[]> ReadRegister(SerialPort sp, ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken)
