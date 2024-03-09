@@ -10,9 +10,9 @@ All messages seem to have the same structure:
 - Data (0 - n bytes)
 - Checksum (1 byte = sum of all previous bytes)
 
-Full message dumps of the bike (sniffed at the battery BMS connection) are available under `dumps`
+Full message dumps of the bike (sniffed at the battery BMS connection) are available under `./dumps`
 
-Example code to work with the Surron RS485 bus is available under `src`
+Example code to work with the Surron RS485 bus is available under `./src`
 
 My theory is, that the controller/ESC is the bus controller (only bus member that can send without being asked to), the battery responds to requests and the display only reads.
 Points in case:
@@ -67,28 +67,50 @@ response to `46`
 | `57` | `8301` | `4B`  | `02` | `00`                     | `28` |
 
 ## Parameter Reverse Engineering
-### Bike (ESC) sniffing
-Some parameters are requested from the BMS by the ESC:
+### Bike sniffing (see dumps under `./dumps`)
 
-| param | meaning known? |
-|-------|----------------|
-| 7     |                |
-| 8     | x              |
-| 9     | x              |
-| 13    | x              |
-| 22    | x              |
+#### Requests (`46`/`47`) from ESC to BMS (addr `1601`)
+
+| param id  | length | response data        |
+|-----------|--------|----------------------|
+| `07` / 7  | 1      | `05`                 |
+| `08` / 8  | 6      | `151515001616`       |
+| `09` / 9  | 4      | `6AF20000`           |
+| `0D` / 13 | 1      | `4B`                 |
+| `16` / 22 | 9      | `E00300000000000000` |
+
+
+#### Unsolicited Data (`57`) from ESC to Display? (addr `8301`)
+| param id  | length | data                     |
+|-----------|--------|--------------------------|
+| `48` / 72 | 11     | `4B6BF20000000080000000` |
+| `4B` / 75 | 1      | `01`                     |
+
+##### `48` / 72:
+- Byte 0: Battery percent (`4B` => 75%)
+- Byte 1-4: Battery voltage (uint32 `63F20000` => 62.051V)
+- Byte 5: ???
+- Byte 6: Brake status?? (usually `00`, can be `02`)
+- Byte 7: Error/Status Flags? (`81` with missing battery, `80` with kickstand down, `00` with kickstand up)
+- Bytes 8-10: ???
+
+##### `4B` / 75:
+probably the way config changes (via brake switch) are communicated to display:
+- normal:  `01` -> `08` -> `00`
+- regen 1?: `01` -> `10` -> `20` -> `00`
+- regen 2?: `01` -> `08` -> `10` -> `00`
+- regen 3?: `01` -> `20` -> `08` -> `00`
 
 ### BMS read brute force
-Just requesting from battery with `461601XXXXXX`.
+Just requesting all parameter IDs from battery with `461601XXXXXX` (The BMS does not respond to parameter IDs that don't exist).
 
-Length can be set up to 64 (though param 160 only responds up to around 32), which returns more data than is actually in the field (it seems like it reads past its buffer and subsequent params are returned when doing so).
+Length can be set up to 64 (though param 160 only responds up to around 32).
+When requesting more data than is actually in the field, it seems like the BMS reads past its buffer and subsequent params are returned).
 
-Lengths can be determined somewhat by counting bytes until the next param is returned.
+Lengths can be determined somewhat by counting bytes until the next param appears in the data.
 
 ### Torp TC500
-There is an aftermarket ESC called "Torp TC500", which has the Surron RS485 communication implemented.
-
-There is an app that shows the battery parameters, so we can at least know which parameters there are (random screenshot from Google Images):
+There is an aftermarket ESC called "Torp TC500", which has the Surron RS485 communication implemented and which has an app that shows the battery parameters, so we can at least know which parameters there are (random screenshot from Google Images):
 
 <img src="./Torp-TC500-app-screenshot.jpg" width="200"></img>
 
@@ -114,19 +136,19 @@ There is an app that shows the battery parameters, so we can at least know which
 
 There is an Android app from the BMS manufacturer that can be found [here](https://imb.greenway-battery.com/assets/imb/page/download.html) (Direct link!).
 
-The Surron BMS does not have Bluetooth so it can't be used with the app, however the protocol / fields are probably similar.
+The Surron BMS does not have Bluetooth so it can't be used with the app, however it looks like the parameter IDs and meaning are the same.
 
-A decompiled version of the function where the bytes are decoded can be found in [Greenway_App_Parser.java](./Greenway_App_Parser.java)
+A search for `GW_RamArrayOrder` in the decompiled code finds the places where data is requested (including the parameter IDs and lengths) and leads to the code that handles the data.
 
-## Parameter Map
+## BMS Parameter Map
 
-Unsure lengths/descriptions are marked with `?`. More question marks = more uncertainty.
+Unsure lengths/descriptions are marked with `?`. More question marks = more uncertainty. The address is always `1601` / 278 for talking to the BMS.
 
 | param | len  | data                                                               | desc                                                 |
 |------:|------|--------------------------------------------------------------------|------------------------------------------------------|
 |     0 | 4    | `46000000`                                                         | something something firmware upgrade status          |
 |     7 | 1    | `05`                                                               | ?                                                    |
-|     8 | 6    | `15151500161616`                                                   | Temperatures (see [below](#temperatures))            |
+|     8 | 8    | `1515150016161600`                                                 | Temperatures (see [below](#temperatures))            |
 |     9 | 4    | `63F20000`                                                         | Battery Voltage (`63F20000` uint32/1000 => 62.051V)  |
 |    10 | 4    | `00000000`/`10000000`/`F0FFFFFF`/`B7FAFFFF`                        | Battery Current (`B7FAFFFF` int32/1000 => -1.353A)   |
 |    13 | 1    | `4B`                                                               | Battery Percent (`4B` => 75%)                        |
@@ -159,13 +181,16 @@ Unsure lengths/descriptions are marked with `?`. More question marks = more unce
 
 ### Temperatures
 ESC reads 6 bytes, however according to app it's 8 bytes long (only bytes 0, 1, 2, 4, 5, 6 are plausible values though).
-Also, not even the app seems to be a bit buggy there as well. My best guess:
+Also, the app seems to be a bit buggy there as well.
+My best guess:
 - byte 0-2: Cell Temperatures (`15` sbyte => 21°C)
 - byte 4: Discharge MOSFET Temperature? (`16` sbyte => 22°C)
 - byte 5: Charge MOSFET Temperature? (`16` sbyte => 22°C)
 - byte 6: Soft-Start Circuit Temperature? (`16` sbyte => 22°C)
 
-"soft start" (also referred to as "pre-start" or "pre-charge") is most likely a built-in BMS feature that reduces the initial current surge when plugging a device into the battery. 
+Though for me, bytes 4 and 5 were always equal, so maybe there is only one temperature sensor there.
+
+"soft start" (also referred to as "pre-start" or "pre-charge" in the app) is most likely a built-in BMS feature that reduces the initial current surge when plugging a device into the battery ("anti spark").
 
 ### History Bytes
 Example: `4DA7FEFFF93C000080100C0C3302`
@@ -177,153 +202,11 @@ Example: `4DA7FEFFF93C000080100C0C3302`
 - byte 13: Min Temperature (`02` sbyte => 2°C)
 
 ### Statistic Bytes
-- byte 0-3: Total Capacity? (`128B0000` uint32 => 35602mAh)
+- byte 0-3: Total Capacity (`128B0000` uint32 => 35_602mAh)
 - byte 4-7: Total Capacity Charged (`44E22600` uint32 => 2_548_292mAh)
-- byte 8-11: Capacity Charged since charge started? (`1A7C0000` uint32 => 31_770mAh)
+- byte 8-11: Capacity Charged since charge/cycle started? (`1A7C0000` uint32 => 31_770mAh)
 
 ### BMS Status
 - byte 0-1: ???
 - byte 2-5: Error Flags
 - byte 6-9: Warning Flags
-
-## From Dumps
-
-### 1601_07_01
-#### Request:
-- `461601070165`
-
-#### Response:
-- `4716010701056B`
-
-#### Captured values:
-- `05`
-
-#### Explanation:
-???
-
-
-### 1601_08_06
-#### Request:
-- `46160108066B`
-
-#### Response:
-- `471601080610100F001111BD`
-- `47160108060F100F001111BC`
-
-#### Captured values:
-- `10100F001111`
-- `0F100F001111`
-- `0F0F0F001111`
-- `151515001515`
-- `151515001616`
-
-#### Explanation:
-???
-
-
-### 1601_09_04
-#### Request:
-- `46160109046A`
-
-#### Response:
-- `47160109046BF20000C8`
-- `47160109046AF20000C7`
-
-#### Captured values:
-- `6BF20000`
-- `6AF20000`
-- `63F20000`
-- `5CF20000`
-- `24F20000`
-- [...]
-
-#### Explanation
-Battery voltage (uint32 `63F20000` => 62.051V)
-
-(Plot of `output_2024-03-05_22-15-39_standup_gas_standown.log`)
-![](./plot_16010904.png)
-
-
-### 1601_0D_01
-
-#### Request:
-- `4616010D016B`
-
-#### Response:
-- `4716010D014BB7`
-
-#### Captured values:
-- `4B`
-
-#### Explanation:
-Battery percent? (`4B` => 75%)
-
-
-### 1601_16_09
-#### Request:
-- `46160116097C`
-
-#### Response:
-- `4716011609E0030000000000000060`
-
-#### Captured values:
-- `E00300000000000000`
-- `200000000000000000`
-
-#### Explanation:
-???
-
-
-### 8301_48_0C
-
-- `578301480C0000000000000080000000AF`
-- `578301480C0000000000000081000000B0`
-- `578301480C4B63F200000000800000004F`
-- `578301480C4B58F20000000000000000C4`
-- `578301480C4B49F20000000000000000B5`
-- `578301480C4B51F200000000800000003D`
-
-#### Captured values:
-- `0000000000000080000000` (battery missing)
-- `0000000000000081000000` (battery missing)
-- `4B00000000000080000000` (startup, kickstand down)
-- `4B6BF20000000080000000` (kickstand down)
-- `4B56F20000000000000000` (kickstand up)
-- `4B55F20000000080000000` (kickstand down)
-- `4B57F20000000200000000` (kickstand up, brake pulled?)
-
-#### Explanation:
-- Byte 0: Battery percent? (`4B` => 75%)
-- Byte 1-4: Battery voltage (uint32 `63F20000` => 62.051V)
-- Byte 5: ???
-- Byte 6: Brake status? (usually `00`, can be `02`)
-- Byte 7: Error/Status Flags? (`81` with missing battery, `80` with kickstand down, `00` with kickstand up)
-- Bytes 8-10: ???
-
-(Plot of `output_2024-03-05_22-15-39_standup_gas_standown.log`)
-![](./plot_8301480C.png)
-
-### 8301_4B_02
-
-- `5783014B020129`
-- `5783014B020830`
-- `5783014B020028`
-
-#### Captured values:
-
-- `01`
-- `08`
-- `00`
-- `80`
-- `10`
-- `20`
-
-#### Explanation:
-has something to do with config via brake switch:
-- normal:  `01` -> `08` -> `00`
-- regen 1 (unsure): `01` -> `10` -> `20` -> `00`
-- regen 2 (unsure): `01` -> `08` -> `10` -> `00`
-- regen 3 (unsure): `01` -> `20` -> `08` -> `00`
-
-(Plot of `output_2024-03-05_22-17-59_startup_regen_3.log`)
-![](./plot_83014B02.png)
