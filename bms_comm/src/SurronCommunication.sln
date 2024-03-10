@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronBms.Sender", "SurronBms.Sender\SurronBms.Sender.csproj", "{25822700-75C4-4C14-9137-98275E9217B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_BmsDemo", "SurronCommunication_BmsDemo\SurronCommunication_BmsDemo.csproj", "{25822700-75C4-4C14-9137-98275E9217B6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronBms.Common", "SurronBms.Common\SurronBms.Common.csproj", "{729F92C3-E876-483B-A366-2DC101103246}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication", "SurronCommunication\SurronCommunication.csproj", "{729F92C3-E876-483B-A366-2DC101103246}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronBms.Tests", "SurronBms.Tests\SurronBms.Tests.csproj", "{D551435E-D7AC-405B-A928-87490FD16FDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_Tests", "SurronCommunication_Tests\SurronCommunication_Tests.csproj", "{D551435E-D7AC-405B-A928-87490FD16FDC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

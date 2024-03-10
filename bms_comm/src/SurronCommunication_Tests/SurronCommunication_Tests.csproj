@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SurronBms.Common\SurronBms.Common.csproj" />
+    <ProjectReference Include="..\SurronCommunication\SurronCommunication.csproj" />
   </ItemGroup>
 
   <ItemGroup>

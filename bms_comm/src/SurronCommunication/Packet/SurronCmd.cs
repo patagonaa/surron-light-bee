@@ -1,4 +1,4 @@
-﻿namespace SurronBms.Common
+﻿namespace SurronCommunication.Packet
 {
     public enum SurronCmd : byte
     {

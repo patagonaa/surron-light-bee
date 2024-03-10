@@ -1,13 +1,19 @@
-using SurronBms.Common;
+using SurronCommunication;
+using SurronCommunication.Packet;
 
-namespace SurronBms.Tests
+namespace SurronCommunication_Tests
 {
     public class SurronDataPacketTests
     {
         [Test]
-        public void FromBytes_Invalid_Throws()
+        public void FromBytes_InvalidChecksum_Throws()
         {
-            Assert.Throws<ArgumentException>(() => { SurronDataPacket.FromBytes(HexUtils.HexToBytes("4616010701FF")); });
+            Assert.Throws<InvalidDataException>(() => { SurronDataPacket.FromBytes(HexUtils.HexToBytes("4616010701FF")); });
+        }
+        [Test]
+        public void FromBytes_Short_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => { SurronDataPacket.FromBytes(HexUtils.HexToBytes("4616")); });
         }
 
         [Test]

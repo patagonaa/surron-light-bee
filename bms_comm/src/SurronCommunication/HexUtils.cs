@@ -1,4 +1,4 @@
-﻿namespace SurronBms.Common
+﻿namespace SurronCommunication
 {
     public static class HexUtils
     {
