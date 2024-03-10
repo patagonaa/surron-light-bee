@@ -146,7 +146,7 @@ Unsure lengths/descriptions are marked with `?`. More question marks = more unce
 
 | param | len  | data                                                               | desc                                                 |
 |------:|------|--------------------------------------------------------------------|------------------------------------------------------|
-|     0 | 4    | `46000000`                                                         | something something firmware upgrade status          |
+|     0 | 4    | `46000000`                                                         | (something about firmware upgrade status in app)     |
 |     7 | 1    | `05`                                                               | ?                                                    |
 |     8 | 8    | `1515150016161600`                                                 | Temperatures (see [below](#temperatures))            |
 |     9 | 4    | `63F20000`                                                         | Battery Voltage (`63F20000` uint32/1000 => 62.051V)  |
@@ -166,7 +166,7 @@ Unsure lengths/descriptions are marked with `?`. More question marks = more unce
 |    27 | 3    | `160301`                                                           | Manufacture Date (2022-03-01)                        |
 |    28 | 4    | `00000000`                                                         | ?                                                    |
 |    29 | 6    | `180307062F02`                                                     | RTC time (`180307062F02` => 2024-03-07T06:47:02)     |
-|    30 | 6    | `000071032201`/`000071032301`                                      | ??? (uint16, uint16) (something `home_chargeTime`)   |
+|    30 | 6    | `000071032201`/`000071032301`                                      | ??? (uint16, uint16) (something `chargeTime` in app) |
 |    32 | 16   | `475245454E5741590000000000000000`                                 | BMS Manufacturer (ASCII "GREENWAY")                  |
 |    33 | 32   | `444D373331363131000000000000000000000000000000000000000000000000` | Battery Model? (ASCII "DM731611")                    |
 |    34 | 16   | `4E435231383635304244000000000000`                                 | Cell Type (ASCII "NCR18650BD")                       |
