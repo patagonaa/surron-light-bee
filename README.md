@@ -12,7 +12,7 @@ Official documentation:
 
 ## Mechanics
 ### Chain
-The stock chain is a 420-106 O-Ring chain, though there is also a sticker with the specification on the chain guard.
+The stock chain is a 420-106 O-Ring chain (there is a sticker with the specification on the chain guard).
 
 ### Belt
 The primary drive belt is 560mm long, 16/17mm wide, 8M Profile. The 17mm width seems to be somewhat non-standard as 15mm/20mm are the usual widths, though you _can_ get them in other sizes at some places as well (and some places use/recommend 16mm).
@@ -31,13 +31,24 @@ Tire spec is `70/100-19 41N TT` / `2.5-19 41N TT` and the stock tires are either
 
 There is an internal RS485 bus between the battery, controller (ESC) and display.
 
+This can be used to read a lot of data from the battery BMS (like health, lifetime capacity (can be used to estimate mileage/efficiency), lifetime min/max temperature, lifetime max charge/discharge current, lifetime min/max cell voltage, manufacturing date, etc.).
+
 Reverse engineering progress of the RS485 protocol is documented under [./bms_comm/README.md](./bms_comm/README.md).
 
 ### Battery
 
-"60V nominal", 16S11P, Panasonic NCR18650PF cells[^forum-manual]. These would allow up to 21A charge and 90A discharge current.
+The stock battery is in a "60V nominal" 16S configuration.
 
-Charging is done via a separate plug with 10A (with the stock charger). The connector pins would allow 20A charging (as would the cells), however it is unclear if the BMS might die / overheat when doing so.
+There are different types of cells used in the batteries (also, battery type can be read from the BMS via RS485):
+
+| Battery       | Cell type                              | Configuration | charge std (max) | discharge std (max) |
+|---------------|----------------------------------------|---------------|------------------|---------------------|
+| 32Ah / 1900Wh | Panasonic NCR18650PF [^forum-manual]   | 16S11P        | 15A (22A)        | 88A (110A)          |
+| 34Ah / 2040Wh | Panasonic NCR18650BD                   | 16S11P        | 10A (16.5A)      | 88A (110A)          |
+| 38Ah / 2220Wh | Samsung INR18650-35E [^reddit-battery] | 16S11P        | 11A (22A)        | 88A (143A)          |
+| 40Ah / 2400Wh | Panasonic NCR21700A [^reddit-battery]  | 16S8P         | 12A (24A)        | 120A                |
+
+Charging is done via a separate plug with 10A (with the stock charger). The connector pins would allow 20A charging however it is unclear if the BMS might die / overheat when doing so (though probably not).
 
 #### BMS
 
@@ -100,6 +111,8 @@ According to the FCC application `2A92B-QL-TBOX-JM` [^tracker-fcc] and the user 
 
 
 [^forum-manual]: Inofficial manual, links to official manuals, etc.: https://electricbike.com/forum/forum/knowledge-base/surron/147526-sur-ron-manual
+
+[^reddit-battery]: Reddit post about different batteries: https://www.reddit.com/r/Surron/comments/127tt74/how_is_the_new_40ah_battery_build_which/
 
 [^forum-bms-rs485]: 
     Forum posts with claims about BMS RS485 capabilities:
