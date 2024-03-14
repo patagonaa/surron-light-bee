@@ -43,8 +43,8 @@ namespace SurronCommunication_BmsDemo
                 BmsParameters.BatteryModel,
                 BmsParameters.CellType,
                 BmsParameters.SerialNumber,
-                BmsParameters.CellVoltages,
-                new(37, 32),
+                BmsParameters.CellVoltages1,
+                BmsParameters.CellVoltages2,
                 BmsParameters.HistoryValues,
                 new(39, 64), // length unknown
                 new(48, 64), // length unknown
@@ -80,14 +80,24 @@ namespace SurronCommunication_BmsDemo
                 { BmsParameters.BatteryModel.Id, response => $"Battery Model: {AsciiToString(response)}" },
                 { BmsParameters.CellType.Id, response => $"Cell Type: {AsciiToString(response)}" },
                 { BmsParameters.SerialNumber.Id, response => $"Serial Number: {AsciiToString(response)}" },
-                { BmsParameters.CellVoltages.Id, response =>
+                { BmsParameters.CellVoltages1.Id, response =>
                     {
                         var voltages = new List<decimal>();
                         for (int batIdx = 0; batIdx < 16; batIdx++)
                         {
                             voltages.Add(BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(batIdx * 2, 2)) / 1000m);
                         }
-                        return $"Cell Voltages: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}";
+                        return $"Cell Voltages 1: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}";
+                    }
+                },
+                { BmsParameters.CellVoltages2.Id, response =>
+                    {
+                        var voltages = new List<decimal>();
+                        for (int batIdx = 0; batIdx < 16; batIdx++)
+                        {
+                            voltages.Add(BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(batIdx * 2, 2)) / 1000m);
+                        }
+                        return $"Cell Voltages 2: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}";
                     }
                 },
                 { BmsParameters.HistoryValues.Id, response =>

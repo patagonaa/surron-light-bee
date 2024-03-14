@@ -23,7 +23,8 @@
         public static readonly ParameterDefinition BatteryModel = new(33, 32);
         public static readonly ParameterDefinition CellType = new(34, 16);
         public static readonly ParameterDefinition SerialNumber = new(35, 32);
-        public static readonly ParameterDefinition CellVoltages = new(36, 32);
+        public static readonly ParameterDefinition CellVoltages1 = new(36, 32);
+        public static readonly ParameterDefinition CellVoltages2 = new(37, 32);
         public static readonly ParameterDefinition HistoryValues = new(38, 14);
     }
 }
