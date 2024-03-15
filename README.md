@@ -82,7 +82,7 @@ So the connector on the bike side has two "male" contacts and the one with the l
 
 ![6-pin bms connector on the battery with tab at the bottom](./images/battery-bms-connector.jpg)
 
-The connector can be found under multiple names, but seem to be (clones of?) Furukawa RFW-series connectors[^bms-connector-datasheet].
+The connectors can be found under multiple names, but they are (clones of?) Furukawa RFW-series connectors[^bms-connector-datasheet].
 - Battery side: `FW-C-6M-B` / `DJ7061Y-2.3-11`
 - Bike side: `FW-C-6F-B` / `DJ7061Y-2.3-21`
 

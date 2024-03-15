@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace SurronCommunication.Communication
 {
-    public sealed class SurronCommunicationHandler : IDisposable
+    public sealed class SurronCommunicationHandler : ISurronCommunicationHandler
     {
         private readonly ICommunication _communication;
 

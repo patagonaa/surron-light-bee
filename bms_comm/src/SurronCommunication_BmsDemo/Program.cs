@@ -1,6 +1,8 @@
-﻿using SurronCommunication.Communication;
+﻿using SurronCommunication;
+using SurronCommunication.Communication;
 using SurronCommunication.Parameter;
 using System.Buffers.Binary;
+using System.CommandLine;
 using System.Globalization;
 using System.Text;
 
@@ -12,14 +14,26 @@ namespace SurronCommunication_BmsDemo
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
-            using var cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (o, args) => { cts.Cancel(); args.Cancel = true; };
+            var rootCommand = new RootCommand("Surron RS485 BMS data reader");
 
-            const ushort bmsAddress = BmsParameters.BmsAddress;
-            var registers = new List<ParameterDefinition>
+            var serialPortOption = new Option<string>("--serialPort", "The serial port to use for RS485 communication. \"{dummy}\" for random data") { IsRequired = true };
+            rootCommand.AddOption(serialPortOption);
+
+            var readIntervalOption = new Option<int?>("--readInterval", "Read data every ~x ms instead of once");
+            rootCommand.AddOption(readIntervalOption);
+
+            var onlyChangesOption = new Option<bool>("--onlyChanges", "Only log parameters that have changed");
+            rootCommand.AddOption(onlyChangesOption);
+
+            var logTextOption = new Option<string?>("--logText", "Log output to file in text form. \"{date}\" can be used to insert the current date and time.");
+            rootCommand.AddOption(logTextOption);
+
+            var logHexOption = new Option<string?>("--logHex", "Log output to file in hex form. \"{date}\" can be used to insert the current date and time.");
+            rootCommand.AddOption(logHexOption);
+
+            var allParameters = BmsParameters.GetAll();
+            var defaultParameters = new[]
             {
-                new(0, 4),
-                new(7, 1),
                 BmsParameters.Temperatures,
                 BmsParameters.BatteryVoltage,
                 BmsParameters.BatteryCurrent,
@@ -27,33 +41,93 @@ namespace SurronCommunication_BmsDemo
                 BmsParameters.BatteryHealth,
                 BmsParameters.RemainingCapacity,
                 BmsParameters.TotalCapacity,
-                new(17, 2),
-                new(20, 4),
                 BmsParameters.Statistics,
-                BmsParameters.BmsStatus,
                 BmsParameters.ChargeCycles,
                 BmsParameters.DesignedCapacity,
-                BmsParameters.DesignedVoltage,
-                BmsParameters.Versions,
                 BmsParameters.ManufacturingDate,
-                new(28, 4),
-                BmsParameters.RtcTime,
-                new(30, 6),
                 BmsParameters.BmsManufacturer,
                 BmsParameters.BatteryModel,
                 BmsParameters.CellType,
                 BmsParameters.SerialNumber,
                 BmsParameters.CellVoltages1,
                 BmsParameters.CellVoltages2,
-                BmsParameters.HistoryValues,
-                new(39, 64), // length unknown
-                new(48, 64), // length unknown
-                new(120, 64), // length unknown
-                new(160, 32) // length unknown
+                BmsParameters.History
             };
+            var parametersOption = new Option<string[]>(
+                "--parameter",
+                () => allParameters.Where(x => defaultParameters.Any(y => x.Definition == y)).Select(x => x.ParameterName).ToArray(),
+                $"Parameters to read from BMS (number / name). Known parameters: {string.Join(", ", allParameters.Select(x => $"{x.ParameterName}({x.Definition.Id})"))}");
+            rootCommand.AddOption(parametersOption);
 
-            using var logger = new Logger();
+            rootCommand.SetHandler(async context =>
+            {
+                var serialPort = context.ParseResult.GetValueForOption(serialPortOption)!;
+                var readInterval = context.ParseResult.GetValueForOption(readIntervalOption);
 
+                var argParameters = context.ParseResult.GetValueForOption(parametersOption)!;
+                var parameters = argParameters.Select(x => GetParamByString(allParameters, x)).ToList();
+
+                var logOnlyChanges = context.ParseResult.GetValueForOption(onlyChangesOption);
+                var logFileText = context.ParseResult.GetValueForOption(logTextOption);
+                var logFileHex = context.ParseResult.GetValueForOption(logHexOption);
+
+                await Run(serialPort, parameters, readInterval, logOnlyChanges, logFileText, logFileHex, context.GetCancellationToken());
+            });
+
+            await rootCommand.InvokeAsync(args);
+        }
+
+        private static async Task Run(string serialPort, List<ParameterDefinition> registers, int? readInterval, bool logOnlyChanges, string? logFileText, string? logFileHex, CancellationToken cancellationToken)
+        {
+            const ushort bmsAddress = BmsParameters.BmsAddress;
+
+            var logger = new Logger(logOnlyChanges, logFileText, logFileHex, GetRegisterFormatHandlers());
+
+            var registerValues = new Dictionary<byte, byte[]>();
+
+            ISurronCommunicationHandler communicationHandler;
+            if (serialPort == "{dummy}")
+            {
+                communicationHandler = new DummySurronCommunicationHandler();
+            }
+            else
+            {
+                communicationHandler = SurronCommunicationHandler.FromSerialPort(serialPort);
+            }
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    logger.BeginTransmission();
+                    foreach (var (register, registerLength) in registers)
+                    {
+                        try
+                        {
+                            var newValue = await communicationHandler.ReadRegister(bmsAddress, register, registerLength, cancellationToken);
+
+                            registerValues.TryGetValue(register, out var oldValue);
+                            registerValues[register] = newValue;
+
+                            logger.LogParameter(register, oldValue, newValue);
+                        }
+                        catch (TimeoutException)
+                        {
+                            logger.LogParameterTimeout(register);
+                        }
+                    }
+                    if (!readInterval.HasValue)
+                        break;
+                    await Task.Delay(readInterval.Value, cancellationToken);
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+            }
+        }
+
+        private static Dictionary<byte, Func<byte[], string>> GetRegisterFormatHandlers()
+        {
             var registerFormatHandlers = new Dictionary<byte, Func<byte[], string>>
             {
                 { BmsParameters.Temperatures.Id, response => $"Temperatures: Cells: {string.Join(' ', response[0..3].Select(x => $"{(sbyte)x,3:0}°C"))} Discharge FET: {(sbyte)response[4],3:0}°C Charge FET: {(sbyte)response[5],3:0}°C Soft Start Circuit: {(sbyte)response[6],3:0}°C"},
@@ -66,9 +140,9 @@ namespace SurronCommunication_BmsDemo
                 { BmsParameters.Statistics.Id, response =>
                 {
                     return
-                        $" Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,6:0.000}Ah " +
-                        $" Lifetime Charged Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(4, 4)) / 1000m,10:0.000}Ah " +
-                        $" Current Charge Session Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(8, 4)) / 1000m,6:0.000}Ah";
+                        $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,6:0.000}Ah " +
+                        $"Lifetime Charged Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(4, 4)) / 1000m,10:0.000}Ah " +
+                        $"Current Charge Session Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(8, 4)) / 1000m,6:0.000}Ah";
                 }},
                 { BmsParameters.ChargeCycles.Id, response => $"Charge Cycles: {BinaryPrimitives.ReadUInt32LittleEndian(response),4}"},
                 { BmsParameters.DesignedCapacity.Id, response => $"Designed Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
@@ -100,7 +174,7 @@ namespace SurronCommunication_BmsDemo
                         return $"Cell Voltages 2: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}";
                     }
                 },
-                { BmsParameters.HistoryValues.Id, response =>
+                { BmsParameters.History.Id, response =>
                     {
                         return
                             $"OutMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,7:#00.000}A " +
@@ -112,96 +186,137 @@ namespace SurronCommunication_BmsDemo
                     }
                 }
             };
-
-            var registerValues = new Dictionary<byte, byte[]>();
-
-            using var communicationHandler = SurronCommunicationHandler.FromSerialPort("COM8");
-
-            try
-            {
-                while (true)
-                {
-                    logger.WriteLine($"{DateTime.Now:s}:");
-                    foreach (var (register, registerLength) in registers)
-                    {
-                        try
-                        {
-                            var response = await communicationHandler.ReadRegister(bmsAddress, register, registerLength, cts.Token);
-
-                            if (!registerValues.TryGetValue(register, out var oldValue) || !oldValue.SequenceEqual(response))
-                            {
-                                registerValues[register] = response;
-
-                                if (registerFormatHandlers.TryGetValue(register, out var formatHandler))
-                                {
-                                    logger.WriteLine(formatHandler(response));
-                                }
-                                else
-                                {
-                                    logger.Write($"{register,3}: ");
-                                    for (var i = 0; i < response.Length; i++)
-                                    {
-                                        logger.Write(response[i].ToString("X2"), oldValue != null && oldValue[i] != response[i]);
-                                    }
-                                    logger.WriteLine();
-                                }
-                            }
-
-                        }
-                        catch (TimeoutException)
-                        {
-                            logger.WriteLine($"{register}: <Timeout>");
-                        }
-                    }
-                    logger.WriteLine();
-                    await Task.Delay(1000);
-                }
-            }
-            catch (OperationCanceledException) when (cts.IsCancellationRequested)
-            {
-            }
-        }
-
-        private class Logger : IDisposable
-        {
-            private readonly StreamWriter _fileWriter;
-
-            public Logger()
-            {
-                _fileWriter = new StreamWriter(File.Open($"Log_{DateTime.Now:yyyy'-'MM'-'dd'_'HH'-'mm'-'ss}.log", FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
-            }
-
-            public void Write(string text, bool highlight = false)
-            {
-                if (highlight)
-                {
-                    Console.ForegroundColor = ConsoleColor.Black;
-                    Console.BackgroundColor = ConsoleColor.Green;
-                }
-                Console.Write(text);
-                if (highlight)
-                    Console.ResetColor();
-                _fileWriter.Write(text);
-                _fileWriter.Flush();
-            }
-
-            public void WriteLine(string text = "")
-            {
-                Console.WriteLine(text);
-                _fileWriter.WriteLine(text);
-                _fileWriter.Flush();
-            }
-
-            public void Dispose()
-            {
-                _fileWriter.Dispose();
-            }
+            return registerFormatHandlers;
         }
 
         private static string AsciiToString(Span<byte> bytes)
         {
             var nulIdx = bytes.IndexOf<byte>(0);
             return Encoding.ASCII.GetString(bytes.Slice(0, nulIdx > -1 ? nulIdx : bytes.Length));
+        }
+
+        private static ParameterDefinition GetParamByString(IList<(string ParameterName, ParameterDefinition Definition)> allParameters, string str)
+        {
+            ParameterDefinition toReturn;
+
+            if (byte.TryParse(str, out byte parsed))
+            {
+                var foundParameter = allParameters.SingleOrDefault(x => x.Definition.Id == parsed).Definition;
+                if (foundParameter.Length != 0)
+                {
+                    toReturn = foundParameter;
+                }
+                else
+                {
+                    toReturn = new ParameterDefinition(parsed, 64);
+                }
+            }
+            else
+            {
+                toReturn = allParameters.SingleOrDefault(x => x.ParameterName == str.Trim()).Definition;
+            }
+
+            if (toReturn.Length == 0)
+                throw new ArgumentException($"String \"{str}\" is not a valid BMS parameter");
+
+            return toReturn;
+        }
+
+        private class Logger : IDisposable
+        {
+            private readonly bool _logOnlyChanges;
+            private readonly Dictionary<byte, Func<byte[], string>> _formatHandlers;
+            private readonly StreamWriter? _logFileText;
+            private readonly StreamWriter? _logFileHex;
+
+            public Logger(bool logOnlyChanges, string? logFileText, string? logFileHex, Dictionary<byte, Func<byte[], string>> formatHandlers)
+            {
+                _logOnlyChanges = logOnlyChanges;
+                _formatHandlers = formatHandlers;
+                var dt = DateTime.Now;
+
+                if (logFileText != null)
+                    _logFileText = new StreamWriter(File.Open(logFileText.Replace("{date}", dt.ToString("yyyy'-'MM'-'dd'_'HH'-'mm'-'ss")), FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+                if (logFileHex != null)
+                    _logFileHex = new StreamWriter(File.Open(logFileHex.Replace("{date}", dt.ToString("yyyy'-'MM'-'dd'_'HH'-'mm'-'ss")), FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+            }
+
+            public void Dispose()
+            {
+                _logFileText?.Dispose();
+                _logFileHex?.Dispose();
+            }
+
+            public void BeginTransmission()
+            {
+                Console.WriteLine();
+                _logFileHex?.WriteLine();
+                _logFileText?.WriteLine();
+
+                var header = $"---{DateTime.Now:yyyy'-'MM'-'dd' 'HH'-'mm'-'ss}---";
+                Console.WriteLine(header);
+                _logFileHex?.WriteLine(header);
+                _logFileText?.WriteLine(header);
+            }
+
+            public void LogParameter(byte register, byte[]? oldValue, byte[] newValue)
+            {
+                if (_logOnlyChanges && oldValue != null && oldValue.SequenceEqual(newValue))
+                    return;
+
+                if (_formatHandlers.TryGetValue(register, out var formatHandler))
+                {
+                    string formatted;
+                    try
+                    {
+                        formatted = formatHandler(newValue);
+                    }
+                    catch (Exception)
+                    {
+                        formatted = $"{register,3}: {HexUtils.BytesToHex(newValue)} (Invalid)";
+                    }
+                    
+                    Console.WriteLine(formatted);
+                    _logFileText?.WriteLine(formatted);
+                }
+                else
+                {
+                    ConsoleLogRawParameter(register, oldValue, newValue);
+                    _logFileText?.WriteLine($"{register,3}: {HexUtils.BytesToHex(newValue)}");
+                }
+                _logFileHex?.WriteLine($"{register,3}: {HexUtils.BytesToHex(newValue)}");
+
+                _logFileText?.Flush();
+                _logFileHex?.Flush();
+            }
+
+            public void LogParameterTimeout(byte register)
+            {
+                var text = $"{register,3}: <Timeout>";
+                Console.WriteLine(text);
+                _logFileHex?.WriteLine(text);
+                _logFileText?.WriteLine(text);
+            }
+
+            private static void ConsoleLogRawParameter(byte register, byte[]? oldValue, byte[] newValue)
+            {
+                Console.Write($"{register,3}: ");
+                for (var i = 0; i < newValue.Length; i++)
+                {
+                    var highlight = oldValue == null || oldValue[i] != newValue[i];
+                    if (highlight)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.BackgroundColor = ConsoleColor.Green;
+                    }
+                    Console.Write(newValue[i].ToString("X2"));
+                    if (highlight)
+                    {
+                        Console.ResetColor();
+                    }
+                }
+                Console.WriteLine();
+            }
         }
     }
 }

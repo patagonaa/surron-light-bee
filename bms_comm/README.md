@@ -124,8 +124,8 @@ There is an aftermarket ESC called "Torp TC500", which has the Surron RS485 comm
 | Full capacity                      | 16                              |
 | Remain capacity                    | 15                              |
 | Charging Cycles                    | 17/23???                        |
-| Estimated mileage                  | ???                             |
-| State of health                    | 14?                             |
+| Estimated mileage                  | 21                              |
+| State of health                    | 14                              |
 | Temperatures                       | 8 (exact mapping still unknown) |
 | Error/Warning Flags                | ???                             |
 | History (max/min temp, curr, volt) | 38                              |
