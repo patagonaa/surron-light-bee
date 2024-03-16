@@ -68,12 +68,12 @@ namespace SurronCommunication.Communication
                     var remainingBytes = length - position;
                     position += _sp.Read(bufferArray, position, remainingBytes);
                 }
+                bufferArray.AsMemory(0, buffer.Length).CopyTo(buffer);
             }
             finally
             {
                 ArrayPool<byte>.Shared.Return(bufferArray);
             }
-            bufferArray.AsMemory(0, buffer.Length).CopyTo(buffer);
             return Task.CompletedTask;
         }
     }

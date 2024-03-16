@@ -1,5 +1,4 @@
-﻿using SurronCommunication;
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
 
 namespace SurronCommunication.Packet
 {
