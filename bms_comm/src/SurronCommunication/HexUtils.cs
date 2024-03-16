@@ -10,7 +10,6 @@
                              .ToArray();
         }
 
-
         public static string BytesToHex(byte[] bytes)
         {
             return string.Join(string.Empty, bytes.Select(x => x.ToString("X2")));

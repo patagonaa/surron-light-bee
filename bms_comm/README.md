@@ -105,7 +105,7 @@ probably the way config changes (via brake switch) are communicated to display:
 Just requesting all parameter IDs from battery with `461601XXXXXX` (The BMS does not respond to parameter IDs that don't exist).
 
 Length can be set up to 64 (though param 160 only responds up to around 32).
-When requesting more data than is actually in the field, it seems like the BMS reads past its buffer and subsequent params are returned).
+When requesting more data than is actually in the field, it seems like the BMS reads past its buffer and subsequent params are returned.
 
 Lengths can be determined somewhat by counting bytes until the next param appears in the data.
 
@@ -204,7 +204,7 @@ Example: `4DA7FEFFF93C000080100C0C3302`
 ### Statistic Bytes
 - byte 0-3: Total Capacity (`128B0000` uint32 => 35_602mAh)
 - byte 4-7: Total Capacity Charged (`44E22600` uint32 => 2_548_292mAh)
-- byte 8-11: Capacity Charged since charge/cycle started? (`1A7C0000` uint32 => 31_770mAh)
+- byte 8-11: Capacity Charged in this Cycle (`1A7C0000` uint32 => 31_770mAh)
 
 ### BMS Status
 - byte 0-1: ???

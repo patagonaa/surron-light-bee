@@ -2,11 +2,11 @@
     "profiles": {
         "SurronCommunication_BmsDemo ReadContinuous COM8": {
             "commandName": "Project",
-            "commandLineArgs": "--serialPort COM8 --readInterval 1000 --logText Log_Text_{date}.log --logHex Log_Hex_{date}.log"
+            "commandLineArgs": "--serialPort COM8 --readInterval 1000 --logText Log_{date}_Text.log --logHex Log_{date}_Hex.log"
         },
         "SurronCommunication_BmsDemo ReadContinuous Dummy": {
             "commandName": "Project",
-            "commandLineArgs": "--serialPort {dummy} --readInterval 1000 --logText Log_Text_{date}.log --logHex Log_Hex_{date}.log"
+            "commandLineArgs": "--serialPort {dummy} --readInterval 1000 --logText Log_{date}_Text.log --logHex Log_{date}_Hex.log"
         },
         "SurronCommunication_BmsDemo ReadOnce COM8": {
             "commandName": "Project",

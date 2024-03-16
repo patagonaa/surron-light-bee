@@ -49,13 +49,13 @@ namespace SurronCommunication.Communication
                 catch (InvalidDataException dataEx)
                 {
                     Debug.WriteLine($"Invalid Data: {dataEx.Message}");
+                    await Task.Delay(100, cancellationToken); // can not be too high or else BMS goes back into standby (after ~3s)
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Unknown Exception: {ex}");
+                    await Task.Delay(100, cancellationToken); // can not be too high or else BMS goes back into standby (after ~3s)
                 }
-
-                await Task.Delay(100, cancellationToken); // can not be too high or else BMS goes back into standby (after ~3s)
             }
         }
 

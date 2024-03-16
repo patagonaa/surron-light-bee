@@ -81,7 +81,7 @@ namespace SurronCommunication_BmsDemo
         {
             const ushort bmsAddress = BmsParameters.BmsAddress;
 
-            var logger = new Logger(logOnlyChanges, logFileText, logFileHex, GetRegisterFormatHandlers());
+            var logger = new Logger(logOnlyChanges, logFileText, logFileHex, readInterval.HasValue && !logOnlyChanges, GetRegisterFormatHandlers());
 
             var registerValues = new Dictionary<byte, byte[]>();
 
@@ -142,7 +142,7 @@ namespace SurronCommunication_BmsDemo
                     return
                         $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,6:0.000}Ah " +
                         $"Lifetime Charged Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(4, 4)) / 1000m,10:0.000}Ah " +
-                        $"Current Charge Session Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(8, 4)) / 1000m,6:0.000}Ah";
+                        $"Current Cycle Charged Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(8, 4)) / 1000m,6:0.000}Ah";
                 }},
                 { BmsParameters.ChargeCycles.Id, response => $"Charge Cycles: {BinaryPrimitives.ReadUInt32LittleEndian(response),4}"},
                 { BmsParameters.DesignedCapacity.Id, response => $"Designed Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
@@ -225,13 +225,19 @@ namespace SurronCommunication_BmsDemo
         private class Logger : IDisposable
         {
             private readonly bool _logOnlyChanges;
+            private readonly bool _alwaysWriteOnTop;
             private readonly Dictionary<byte, Func<byte[], string>> _formatHandlers;
             private readonly StreamWriter? _logFileText;
             private readonly StreamWriter? _logFileHex;
 
-            public Logger(bool logOnlyChanges, string? logFileText, string? logFileHex, Dictionary<byte, Func<byte[], string>> formatHandlers)
+            public Logger(bool logOnlyChanges, string? logFileText, string? logFileHex, bool alwaysWriteOnTop, Dictionary<byte, Func<byte[], string>> formatHandlers)
             {
                 _logOnlyChanges = logOnlyChanges;
+                _alwaysWriteOnTop = alwaysWriteOnTop;
+                if (_logOnlyChanges && _alwaysWriteOnTop)
+                    throw new ArgumentException("LogOnlyChanges and AlwaysWriteOnTop can not be used together");
+                if (_alwaysWriteOnTop)
+                    Console.Clear();
                 _formatHandlers = formatHandlers;
                 var dt = DateTime.Now;
 
@@ -249,13 +255,21 @@ namespace SurronCommunication_BmsDemo
 
             public void BeginTransmission()
             {
-                Console.WriteLine();
-                _logFileHex?.WriteLine();
-                _logFileText?.WriteLine();
-
                 var header = $"---{DateTime.Now:yyyy'-'MM'-'dd' 'HH'-'mm'-'ss}---";
+                if (_alwaysWriteOnTop)
+                {
+                    Console.SetCursorPosition(0, 0);
+                }
+                else
+                {
+                    Console.WriteLine();
+                }
+
                 Console.WriteLine(header);
+                _logFileHex?.WriteLine();
                 _logFileHex?.WriteLine(header);
+
+                _logFileText?.WriteLine();
                 _logFileText?.WriteLine(header);
             }
 
@@ -275,13 +289,15 @@ namespace SurronCommunication_BmsDemo
                     {
                         formatted = $"{register,3}: {HexUtils.BytesToHex(newValue)} (Invalid)";
                     }
-                    
-                    Console.WriteLine(formatted);
+
+                    Console.Write(formatted);
+                    ConsoleFillAndWriteLine();
                     _logFileText?.WriteLine(formatted);
                 }
                 else
                 {
                     ConsoleLogRawParameter(register, oldValue, newValue);
+                    ConsoleFillAndWriteLine();
                     _logFileText?.WriteLine($"{register,3}: {HexUtils.BytesToHex(newValue)}");
                 }
                 _logFileHex?.WriteLine($"{register,3}: {HexUtils.BytesToHex(newValue)}");
@@ -293,7 +309,8 @@ namespace SurronCommunication_BmsDemo
             public void LogParameterTimeout(byte register)
             {
                 var text = $"{register,3}: <Timeout>";
-                Console.WriteLine(text);
+                Console.Write(text);
+                ConsoleFillAndWriteLine();
                 _logFileHex?.WriteLine(text);
                 _logFileText?.WriteLine(text);
             }
@@ -315,7 +332,29 @@ namespace SurronCommunication_BmsDemo
                         Console.ResetColor();
                     }
                 }
+            }
+
+            private void ConsoleFillAndWriteLine()
+            {
+                if (!_alwaysWriteOnTop)
+                {
+                    Console.WriteLine();
+                    return;
+                }
+
+                int toFill;
+                try
+                {
+                    toFill = Console.BufferWidth - Console.CursorLeft - 1;
+                }
+                catch (Exception)
+                {
+                    toFill = 10;
+                }
+
+                Console.Write(new string(' ', toFill));
                 Console.WriteLine();
+
             }
         }
     }
