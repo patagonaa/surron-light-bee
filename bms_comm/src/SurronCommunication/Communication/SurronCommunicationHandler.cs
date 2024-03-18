@@ -85,7 +85,7 @@ namespace SurronCommunication.Communication
 
             try
             {
-                var restLength = SurronDataPacket.GetPacketLengthFromHeader(buffer) - headerLength;
+                var restLength = SurronDataPacket.GetPacketLengthFromHeader(buffer.AsSpan(0, headerLength)) - headerLength;
                 if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, restLength), timeoutMillis, token))
                     return null;
                 bufferPos += restLength;
