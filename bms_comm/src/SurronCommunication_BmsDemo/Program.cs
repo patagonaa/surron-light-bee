@@ -85,15 +85,7 @@ namespace SurronCommunication_BmsDemo
 
             var registerValues = new Dictionary<byte, byte[]>();
 
-            ISurronCommunicationHandler communicationHandler;
-            if (serialPort == "{dummy}")
-            {
-                communicationHandler = new DummySurronCommunicationHandler();
-            }
-            else
-            {
-                communicationHandler = SurronCommunicationHandler.FromSerialPort(serialPort);
-            }
+            using var communicationHandler = GetCommunicationHandler(serialPort);
 
             try
             {
@@ -126,6 +118,18 @@ namespace SurronCommunication_BmsDemo
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
+            }
+        }
+
+        private static ISurronCommunicationHandler GetCommunicationHandler(string serialPort)
+        {
+            if (serialPort == "{dummy}")
+            {
+                return new DummySurronCommunicationHandler();
+            }
+            else
+            {
+                return SurronCommunicationHandler.FromSerialPort(serialPort);
             }
         }
 
