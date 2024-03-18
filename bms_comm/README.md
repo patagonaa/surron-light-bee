@@ -119,15 +119,15 @@ There is an aftermarket ESC called "Torp TC500", which has the Surron RS485 comm
 | RTC                                | 29                              |
 | Serial Number                      | 35                              |
 | Manufacturing Date                 | 27                              |
-| Hardware Version                   | ???                             |
+| Hardware Version                   | 26                              |
 | Software Version                   | 26                              |
 | Full capacity                      | 16                              |
 | Remain capacity                    | 15                              |
-| Charging Cycles                    | 17/23???                        |
+| Charging Cycles                    | 23                              |
 | Estimated mileage                  | 21                              |
 | State of health                    | 14                              |
 | Temperatures                       | 8 (exact mapping still unknown) |
-| Error/Warning Flags                | ???                             |
+| Error/Warning Flags                | 22                              |
 | History (max/min temp, curr, volt) | 38                              |
 | Protection IC error counter        | ???                             |
 | Battery drop counter               | ???                             |
