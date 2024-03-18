@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.IO.Ports;
+using System.Threading;
 
 namespace SurronCommunication.Communication
 {

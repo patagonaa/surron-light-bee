@@ -1,4 +1,7 @@
-﻿namespace SurronCommunication
+﻿using System;
+using System.Text;
+
+namespace SurronCommunication
 {
     public static class HexUtils
     {

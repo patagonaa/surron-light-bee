@@ -1,4 +1,8 @@
-﻿namespace SurronCommunication.Communication
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace SurronCommunication.Communication
 {
     internal interface ICommunication : IDisposable
     {

@@ -1,4 +1,7 @@
 ﻿using SurronCommunication.Packet;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SurronCommunication.Communication
 {
@@ -30,7 +33,6 @@ namespace SurronCommunication.Communication
 
         public void Dispose()
         {
-            throw new NotImplementedException();
         }
     }
 }
