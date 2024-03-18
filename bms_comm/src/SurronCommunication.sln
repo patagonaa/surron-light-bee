@@ -11,6 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_Tests",
 EndProject
 Project("{11A8DD76-328B-46DF-9F39-F559912D0360}") = "SurronCommunication_NanoFramework", "SurronCommunication_NanoFramework\SurronCommunication_NanoFramework.nfproj", "{FACF843D-F024-44B2-9A40-B030755D0A50}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01_Library", "01_Library", "{A339D36F-5EAB-4094-81D0-A66D56A89688}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02_Tests", "02_Tests", "{582A948B-8CAD-45DF-83CF-CD797831DDDD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03_Examples", "03_Examples", "{F4970D7A-1FA3-446C-B67A-4CB607E360B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +44,12 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{25822700-75C4-4C14-9137-98275E9217B6} = {F4970D7A-1FA3-446C-B67A-4CB607E360B9}
+		{729F92C3-E876-483B-A366-2DC101103246} = {A339D36F-5EAB-4094-81D0-A66D56A89688}
+		{D551435E-D7AC-405B-A928-87490FD16FDC} = {582A948B-8CAD-45DF-83CF-CD797831DDDD}
+		{FACF843D-F024-44B2-9A40-B030755D0A50} = {A339D36F-5EAB-4094-81D0-A66D56A89688}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E39BA94C-E298-4607-9D1F-769AB6EA764A}
