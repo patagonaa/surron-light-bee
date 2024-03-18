@@ -1,4 +1,14 @@
 ﻿namespace SurronCommunication.Parameter
 {
-    public record ParameterDefinition(byte Id, byte Length);
+    public class ParameterDefinition
+    {
+        public ParameterDefinition(byte id, byte length)
+        {
+            Id = id;
+            Length = length;
+        }
+
+        public byte Id { get; }
+        public byte Length { get; }
+    }
 }

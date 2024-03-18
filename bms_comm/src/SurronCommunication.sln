@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication", "Surr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_Tests", "SurronCommunication_Tests\SurronCommunication_Tests.csproj", "{D551435E-D7AC-405B-A928-87490FD16FDC}"
 EndProject
+Project("{11A8DD76-328B-46DF-9F39-F559912D0360}") = "SurronCommunication_NanoFramework", "SurronCommunication_NanoFramework\SurronCommunication_NanoFramework.nfproj", "{FACF843D-F024-44B2-9A40-B030755D0A50}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,12 @@ Global
 		{D551435E-D7AC-405B-A928-87490FD16FDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D551435E-D7AC-405B-A928-87490FD16FDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D551435E-D7AC-405B-A928-87490FD16FDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

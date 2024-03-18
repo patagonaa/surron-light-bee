@@ -1,6 +1,12 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
+#if NANOFRAMEWORK_1_0
+using System.Buffers.Binary;
+using ReadOnlySpanByte = System.SpanByte;
+#else
+using ReadOnlySpanByte = System.ReadOnlySpan<byte>;
+using SpanByte = System.Span<byte>;
+#endif
 
 namespace SurronCommunication.Communication
 {
@@ -10,18 +16,18 @@ namespace SurronCommunication.Communication
         /// Write the supplied bytes to the device.
         /// </summary>
         /// <exception cref="OperationCanceledException">Operation was canceled</exception>
-        Task Write(ReadOnlyMemory<byte> bytes, CancellationToken token);
+        void Write(ReadOnlySpanByte bytes, CancellationToken token);
         /// <summary>
         /// Read enough data to fill the supplied buffer completely.
         /// </summary>
         /// <exception cref="TimeoutException">Timeout has expired</exception>
         /// <exception cref="OperationCanceledException">Operation was canceled</exception>
-        Task ReadExactly(Memory<byte> buffer, int timeoutMillis, CancellationToken token);
+        void ReadExactly(SpanByte buffer, int timeoutMillis, CancellationToken token);
 
         /// <summary>
         /// Discard the input / read buffer.
         /// </summary>
         /// <exception cref="OperationCanceledException">Operation was canceled</exception>
-        Task DiscardInBuffer(CancellationToken token);
+        void DiscardInBuffer(CancellationToken token);
     }
 }

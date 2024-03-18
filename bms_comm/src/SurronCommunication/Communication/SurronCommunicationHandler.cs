@@ -3,7 +3,9 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
+#if NANOFRAMEWORK_1_0
+using System.Buffers.Binary;
+#endif
 
 namespace SurronCommunication.Communication
 {
@@ -21,7 +23,7 @@ namespace SurronCommunication.Communication
             return new SurronCommunicationHandler(new SerialCommunication(serialPort));
         }
 
-        public async Task<byte[]> ReadRegister(ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken)
+        public byte[] ReadRegister(ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken)
         {
             var sendPacket = SurronDataPacket.Create(SurronCmd.ReadRequest, address, parameter, paramLength, null);
 
@@ -29,13 +31,13 @@ namespace SurronCommunication.Communication
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await _communication.DiscardInBuffer(cancellationToken);
-                await SendPacket(sendPacket, cancellationToken);
+                _communication.DiscardInBuffer(cancellationToken);
+                SendPacket(sendPacket, cancellationToken);
 
                 try
                 {
                     // 9600 baud 8N1 = ~960 bytes/s, so 200ms are enough for ~192 bytes.
-                    var packet = await ReceivePacket(200, cancellationToken);
+                    var packet = ReceivePacket(200, cancellationToken);
                     if (packet.Address == address && packet.Parameter == parameter && packet.DataLength == paramLength)
                         return packet.CommandData!;
                     Debug.WriteLine($"Wrong Packet {packet}");
@@ -53,34 +55,34 @@ namespace SurronCommunication.Communication
                 catch (InvalidDataException dataEx)
                 {
                     Debug.WriteLine($"Invalid Data: {dataEx.Message}");
-                    await Task.Delay(100, cancellationToken); // can not be too high or else BMS goes back into standby (after ~3s)
+                    Thread.Sleep(100); // can not be too high or else BMS goes back into standby (after ~3s)
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Unknown Exception: {ex}");
-                    await Task.Delay(100, cancellationToken); // can not be too high or else BMS goes back into standby (after ~3s)
+                    Thread.Sleep(100); // can not be too high or else BMS goes back into standby (after ~3s)
                 }
             }
         }
 
-        public async Task SendPacket(SurronDataPacket packet, CancellationToken token)
+        public void SendPacket(SurronDataPacket packet, CancellationToken token)
         {
             var toSend = packet.ToBytes();
             Debug.WriteLine($">{HexUtils.BytesToHex(toSend)}");
-            await _communication.Write(toSend, token);
+            _communication.Write(toSend, token);
         }
 
-        public async Task<SurronDataPacket> ReceivePacket(int timeoutMillis, CancellationToken token)
+        public SurronDataPacket ReceivePacket(int timeoutMillis, CancellationToken token)
         {
             var buffer = new byte[512];
             var bufferPos = 0;
 
             var headerLength = SurronDataPacket.HeaderLength;
-            await _communication.ReadExactly(buffer.AsMemory(bufferPos, headerLength), timeoutMillis, token);
+            _communication.ReadExactly(buffer.AsSpan(bufferPos, headerLength), timeoutMillis, token);
             bufferPos += headerLength;
 
             var restLength = SurronDataPacket.GetPacketLengthFromHeader(buffer) - headerLength;
-            await _communication.ReadExactly(buffer.AsMemory(bufferPos, restLength), timeoutMillis, token);
+            _communication.ReadExactly(buffer.AsSpan(bufferPos, restLength), timeoutMillis, token);
             bufferPos += restLength;
 
             Debug.WriteLine($"<{HexUtils.BytesToHex(buffer.AsSpan(0, bufferPos).ToArray())}");

@@ -100,20 +100,23 @@ namespace SurronCommunication_BmsDemo
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     logger.BeginTransmission();
-                    foreach (var (register, registerLength) in registers)
+                    foreach (var register in registers)
                     {
+                        var registerId = register.Id;
+                        var registerLength = register.Length;
+
                         try
                         {
-                            var newValue = await communicationHandler.ReadRegister(bmsAddress, register, registerLength, cancellationToken);
+                            var newValue = communicationHandler.ReadRegister(bmsAddress, registerId, registerLength, cancellationToken);
 
-                            registerValues.TryGetValue(register, out var oldValue);
-                            registerValues[register] = newValue;
+                            registerValues.TryGetValue(registerId, out var oldValue);
+                            registerValues[registerId] = newValue;
 
-                            logger.LogParameter(register, oldValue, newValue);
+                            logger.LogParameter(registerId, oldValue, newValue);
                         }
                         catch (TimeoutException)
                         {
-                            logger.LogParameterTimeout(register);
+                            logger.LogParameterTimeout(registerId);
                         }
                     }
                     if (!readInterval.HasValue)

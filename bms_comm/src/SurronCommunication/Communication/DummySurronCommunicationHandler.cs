@@ -1,7 +1,6 @@
 ﻿using SurronCommunication.Packet;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SurronCommunication.Communication
 {
@@ -14,19 +13,19 @@ namespace SurronCommunication.Communication
             _random = new Random();
         }
 
-        public Task<byte[]> ReadRegister(ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken)
+        public byte[] ReadRegister(ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken)
         {
             var bytes = new byte[paramLength];
             _random.NextBytes(bytes);
-            return Task.FromResult(bytes);
+            return bytes;
         }
 
-        public Task<SurronDataPacket> ReceivePacket(int timeoutMillis, CancellationToken token)
+        public SurronDataPacket ReceivePacket(int timeoutMillis, CancellationToken token)
         {
             throw new NotImplementedException();
         }
 
-        public Task SendPacket(SurronDataPacket packet, CancellationToken token)
+        public void SendPacket(SurronDataPacket packet, CancellationToken token)
         {
             throw new NotImplementedException();
         }

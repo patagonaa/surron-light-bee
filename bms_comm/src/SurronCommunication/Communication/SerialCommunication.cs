@@ -1,6 +1,13 @@
-﻿using System.Buffers;
+﻿using System;
 using System.IO.Ports;
 using System.Threading;
+#if NANOFRAMEWORK_1_0
+using System.Buffers.Binary;
+using ReadOnlySpanByte = System.SpanByte;
+#else
+using ReadOnlySpanByte = System.ReadOnlySpan<byte>;
+using SpanByte = System.Span<byte>;
+#endif
 
 namespace SurronCommunication.Communication
 {
@@ -29,53 +36,42 @@ namespace SurronCommunication.Communication
             _sp.Dispose();
         }
 
-        public Task DiscardInBuffer(CancellationToken token)
+        public void DiscardInBuffer(CancellationToken token)
         {
             EnsureOpen();
+
+#if NANOFRAMEWORK_1_0
+            var available = _sp.BytesToRead;
+            var tmpBuf = new byte[available];
+            _sp.Read(tmpBuf, 0, available);
+#else
             _sp.DiscardInBuffer();
-            return Task.CompletedTask;
+#endif
         }
 
-        public Task Write(ReadOnlyMemory<byte> bytes, CancellationToken token)
+        public void Write(ReadOnlySpanByte bytes, CancellationToken token)
         {
             EnsureOpen();
 
-            var buffer = ArrayPool<byte>.Shared.Rent(bytes.Length);
-            try
-            {
-                bytes.CopyTo(buffer);
-                _sp.Write(buffer, 0, bytes.Length);
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-            return Task.CompletedTask;
+            var array = bytes.ToArray();
+            _sp.Write(array, 0, array.Length);
         }
 
-        public Task ReadExactly(Memory<byte> buffer, int timeoutMillis, CancellationToken token)
+        public void ReadExactly(SpanByte buffer, int timeoutMillis, CancellationToken token)
         {
             EnsureOpen();
             _sp.ReadTimeout = timeoutMillis;
             var position = 0;
             var length = buffer.Length;
 
-            var bufferArray = ArrayPool<byte>.Shared.Rent(length);
-            try
+            var bufferArray = new byte[length];
+            while (position < length)
             {
-                while (position < length)
-                {
-                    token.ThrowIfCancellationRequested();
-                    var remainingBytes = length - position;
-                    position += _sp.Read(bufferArray, position, remainingBytes);
-                }
-                bufferArray.AsMemory(0, buffer.Length).CopyTo(buffer);
+                token.ThrowIfCancellationRequested();
+                var remainingBytes = length - position;
+                position += _sp.Read(bufferArray, position, remainingBytes);
             }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(bufferArray);
-            }
-            return Task.CompletedTask;
+            bufferArray.AsSpan(0, buffer.Length).CopyTo(buffer);
         }
     }
 }

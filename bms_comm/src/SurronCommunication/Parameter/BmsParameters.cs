@@ -1,7 +1,9 @@
-﻿using System;
+﻿#if !NANOFRAMEWORK_1_0
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+#endif
 
 namespace SurronCommunication.Parameter
 {
@@ -42,6 +44,7 @@ namespace SurronCommunication.Parameter
         public static readonly ParameterDefinition Unknown_120 = new(120, 64); // length unknown
         public static readonly ParameterDefinition Unknown_160 = new(160, 32); // length unknown
 
+#if !NANOFRAMEWORK_1_0
         public static IList<(string ParameterName, ParameterDefinition Definition)> GetAll()
         {
             var fields = typeof(BmsParameters).GetFields(BindingFlags.Public | BindingFlags.Static);
@@ -50,5 +53,6 @@ namespace SurronCommunication.Parameter
                 .Select(x => (x.Name, (ParameterDefinition)(x.GetValue(null) ?? throw new Exception("ParameterDefinition may not be null"))))
                 .ToList();
         }
+#endif
     }
 }

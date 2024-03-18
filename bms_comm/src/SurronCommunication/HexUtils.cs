@@ -7,15 +7,22 @@ namespace SurronCommunication
     {
         public static byte[] HexToBytes(string hex)
         {
-            return Enumerable.Range(0, hex.Length)
-                             .Where(x => x % 2 == 0)
-                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                             .ToArray();
+            var buffer = new byte[hex.Length / 2];
+            for (int i = 0; i < hex.Length / 2; i++)
+            {
+                buffer[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+            }
+            return buffer;
         }
 
         public static string BytesToHex(byte[] bytes)
         {
-            return string.Join(string.Empty, bytes.Select(x => x.ToString("X2")));
+            var sb = new StringBuilder(bytes.Length * 2);
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                sb.Append(bytes[i].ToString("X2"));
+            }
+            return sb.ToString();
         }
     }
 }

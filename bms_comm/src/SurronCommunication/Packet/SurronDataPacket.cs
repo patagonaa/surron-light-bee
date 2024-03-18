@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.IO;
+#if !NANOFRAMEWORK_1_0
+using SpanByte = System.Span<byte>;
+#endif
 
 namespace SurronCommunication.Packet
 {
@@ -32,7 +35,7 @@ namespace SurronCommunication.Packet
             return new SurronDataPacket(command, address, parameter, dataLength, commandData);
         }
 
-        public static SurronDataPacket FromBytes(Span<byte> data)
+        public static SurronDataPacket FromBytes(SpanByte data)
         {
             if (data.Length < 6)
                 throw new ArgumentException("Message too short (less than 6 bytes)");
@@ -46,20 +49,20 @@ namespace SurronCommunication.Packet
                 }
             }
 
-            var readChecksum = data[^1];
+            var readChecksum = data[data.Length - 1];
 
             if (readChecksum != calcChecksum)
                 throw new InvalidDataException($"Invalid checksum (calculated: {calcChecksum:X2}, read: {readChecksum:X2})");
 
-            var (command, address, parameter, dataLength) = ReadHeader(data);
+            var header = ReadHeader(data);
 
-            var expectedLength = GetPacketLength(command, dataLength);
+            var expectedLength = GetPacketLength(header.Command, header.DataLength);
             if (data.Length != expectedLength)
                 throw new InvalidDataException($"Message too short (expected {expectedLength}, got {data.Length})");
 
-            var commandData = command == SurronCmd.ReadRequest ? null : data.Slice(5, dataLength).ToArray();
+            var commandData = header.Command == SurronCmd.ReadRequest ? null : data.Slice(5, header.DataLength).ToArray();
 
-            return new SurronDataPacket(command, address, parameter, dataLength, commandData);
+            return new SurronDataPacket(header.Command, header.Address, header.Parameter, header.DataLength, commandData);
         }
 
         public byte[] ToBytes()
@@ -72,32 +75,57 @@ namespace SurronCommunication.Packet
             bytes[4] = Command == SurronCmd.Status ? (byte)(DataLength + 1) : DataLength;
             if (Command != SurronCmd.ReadRequest)
                 CommandData.CopyTo(bytes.AsSpan(5, DataLength));
-            var checksum = bytes[..^1].Aggregate((byte)0, (a, b) => (byte)(a + b));
-            bytes[^1] = checksum;
+
+            byte calcChecksum = 0;
+            for (int i = 0; i < bytes.Length - 1; i++)
+            {
+                unchecked
+                {
+                    calcChecksum += bytes[i];
+                }
+            }
+            bytes[bytes.Length - 1] = calcChecksum;
+
             return bytes;
         }
 
-        private static (SurronCmd Command, ushort Address, byte Parameter, byte DataLength) ReadHeader(Span<byte> header)
+        private static SurronHeader ReadHeader(SpanByte header)
         {
             if (header.Length < HeaderLength)
                 throw new ArgumentException($"Header must be at least {HeaderLength} bytes long");
 
             var command = (SurronCmd)header[0];
 
-            if (!Enum.IsDefined(command))
+            if (!(command == SurronCmd.Status || command == SurronCmd.ReadResponse || command == SurronCmd.ReadRequest))
                 throw new InvalidDataException($"Command {command} is not valid.");
 
             var address = BinaryPrimitives.ReadUInt16LittleEndian(header.Slice(1, 2));
             var parameter = header[3];
             var dataLength = command == SurronCmd.Status ? (byte)(header[4] - 1) : header[4];
 
-            return (command, address, parameter, dataLength);
+            return new SurronHeader(command, address, parameter, dataLength);
         }
 
-        public static int GetPacketLengthFromHeader(Span<byte> header)
+        public static int GetPacketLengthFromHeader(SpanByte headerBytes)
         {
-            var (command, _, _, dataLen) = ReadHeader(header);
-            return GetPacketLength(command, dataLen);
+            var header = ReadHeader(headerBytes);
+            return GetPacketLength(header.Command, header.DataLength);
+        }
+
+        private class SurronHeader
+        {
+            public SurronCmd Command { get; }
+            public ushort Address { get; }
+            public byte Parameter { get; }
+            public byte DataLength { get; }
+
+            public SurronHeader(SurronCmd command, ushort address, byte parameter, byte dataLength)
+            {
+                Command = command;
+                Address = address;
+                Parameter = parameter;
+                DataLength = dataLength;
+            }
         }
 
         public static int GetPacketLength(SurronCmd command, int dataLen)
@@ -113,7 +141,7 @@ namespace SurronCommunication.Packet
 
         public override string ToString()
         {
-            return $"{Command} {Address:X4} {Parameter:X2} - {HexUtils.BytesToHex(CommandData ?? [])}";
+            return $"{Command} {Address:X4} {Parameter:X2} - {(CommandData != null ? HexUtils.BytesToHex(CommandData) : "")}";
         }
     }
 }
