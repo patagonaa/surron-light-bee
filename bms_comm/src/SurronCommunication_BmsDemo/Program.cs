@@ -97,19 +97,17 @@ namespace SurronCommunication_BmsDemo
                         var registerId = register.Id;
                         var registerLength = register.Length;
 
-                        try
-                        {
-                            var newValue = communicationHandler.ReadRegister(bmsAddress, registerId, registerLength, cancellationToken);
+                        var newValue = communicationHandler.ReadRegister(bmsAddress, registerId, registerLength, cancellationToken);
 
-                            registerValues.TryGetValue(registerId, out var oldValue);
-                            registerValues[registerId] = newValue;
-
-                            logger.LogParameter(registerId, oldValue, newValue);
-                        }
-                        catch (TimeoutException)
+                        if (newValue == null)
                         {
                             logger.LogParameterTimeout(registerId);
+                            continue;
                         }
+                        registerValues.TryGetValue(registerId, out var oldValue);
+                        registerValues[registerId] = newValue;
+
+                        logger.LogParameter(registerId, oldValue, newValue);
                     }
                     if (!readInterval.HasValue)
                         break;

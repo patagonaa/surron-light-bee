@@ -62,7 +62,7 @@ namespace SurronCommunication.Packet
 
             var commandData = header.Command == SurronCmd.ReadRequest ? null : data.Slice(5, header.DataLength).ToArray();
 
-            return new SurronDataPacket(header.Command, header.Address, header.Parameter, header.DataLength, commandData);
+            return Create(header.Command, header.Address, header.Parameter, header.DataLength, commandData);
         }
 
         public byte[] ToBytes()
@@ -74,7 +74,7 @@ namespace SurronCommunication.Packet
             bytes[3] = Parameter;
             bytes[4] = Command == SurronCmd.Status ? (byte)(DataLength + 1) : DataLength;
             if (Command != SurronCmd.ReadRequest)
-                CommandData.CopyTo(bytes.AsSpan(5, DataLength));
+                CommandData!.CopyTo(bytes.AsSpan(5, DataLength));
 
             byte calcChecksum = 0;
             for (int i = 0; i < bytes.Length - 1; i++)
@@ -141,7 +141,15 @@ namespace SurronCommunication.Packet
 
         public override string ToString()
         {
-            return $"{Command} {Address:X4} {Parameter:X2} - {(CommandData != null ? HexUtils.BytesToHex(CommandData) : "")}";
+            var commandStr = Command switch
+            {
+                SurronCmd.ReadRequest => nameof(SurronCmd.ReadRequest),
+                SurronCmd.ReadResponse => nameof(SurronCmd.ReadResponse),
+                SurronCmd.Status => nameof(SurronCmd.Status),
+                _ => "[Invalid]"
+            };
+
+            return $"{commandStr} {Address:X4} {Parameter:X2} - {(CommandData != null ? HexUtils.BytesToHex(CommandData) : "")}";
         }
     }
 }

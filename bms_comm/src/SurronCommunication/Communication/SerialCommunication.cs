@@ -57,21 +57,38 @@ namespace SurronCommunication.Communication
             _sp.Write(array, 0, array.Length);
         }
 
-        public void ReadExactly(SpanByte buffer, int timeoutMillis, CancellationToken token)
+        public bool ReadExactly(SpanByte buffer, int timeoutMillis, CancellationToken token)
         {
             EnsureOpen();
-            _sp.ReadTimeout = timeoutMillis;
             var position = 0;
             var length = buffer.Length;
 
+            var waitMs = 10;
+            var totalRetries = timeoutMillis == Timeout.Infinite ? int.MaxValue : timeoutMillis / waitMs;
+            var retries = 0;
             var bufferArray = new byte[length];
             while (position < length)
             {
                 token.ThrowIfCancellationRequested();
                 var remainingBytes = length - position;
-                position += _sp.Read(bufferArray, position, remainingBytes);
+
+                if (_sp.BytesToRead >= remainingBytes)
+                {
+                    position += _sp.Read(bufferArray, position, remainingBytes);
+                }
+                else
+                {
+                    retries++;
+                    if (retries > totalRetries)
+                    {
+                        return false;
+                    }
+
+                    Thread.Sleep(waitMs);
+                }
             }
             bufferArray.AsSpan(0, buffer.Length).CopyTo(buffer);
+            return true;
         }
     }
 }

@@ -20,9 +20,9 @@ namespace SurronCommunication.Communication
         /// <summary>
         /// Read enough data to fill the supplied buffer completely.
         /// </summary>
-        /// <exception cref="TimeoutException">Timeout has expired</exception>
+        /// <returns>true, if the number of bytes could be read. false, if the timeout has expired.</returns>
         /// <exception cref="OperationCanceledException">Operation was canceled</exception>
-        void ReadExactly(SpanByte buffer, int timeoutMillis, CancellationToken token);
+        bool ReadExactly(SpanByte buffer, int timeoutMillis, CancellationToken token);
 
         /// <summary>
         /// Discard the input / read buffer.
