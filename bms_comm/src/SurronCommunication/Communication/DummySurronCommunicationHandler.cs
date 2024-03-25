@@ -20,14 +20,14 @@ namespace SurronCommunication.Communication
             return bytes;
         }
 
-        public SurronDataPacket ReceivePacket(int timeoutMillis, CancellationToken token)
+        public SurronReadResult ReceivePacket(int timeoutMillis, CancellationToken token, out SurronDataPacket? packet)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public void SendPacket(SurronDataPacket packet, CancellationToken token)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public void Dispose()

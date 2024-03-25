@@ -39,25 +39,30 @@ namespace SurronCommunication.Communication
                 try
                 {
                     // 9600 baud 8N1 = ~960 bytes/s, so 200ms are enough for ~192 bytes.
-                    var packet = ReceivePacket(200, cancellationToken);
+                    var result = ReceivePacket(100, cancellationToken, out var packet);
 
-                    if (packet != null)
+                    switch (result)
                     {
-                        if (packet.Address == address && packet.Parameter == parameter && packet.DataLength == paramLength)
-                            return packet.CommandData!;
-                        Debug.WriteLine($"Wrong Packet {packet}");
-                        continue;
+                        case SurronReadResult.Success:
+                            {
+                                if (packet!.Address == address && packet.Parameter == parameter && packet.DataLength == paramLength)
+                                    return packet.CommandData!;
+                                Debug.WriteLine($"{_logPrefix}: Wrong Packet {packet}");
+                                continue;
+                            }
+                        case SurronReadResult.Timeout:
+                            Console.WriteLine($"{_logPrefix}: Timeout");
+                            continue;
+                        case SurronReadResult.InvalidData:
+                            Console.WriteLine($"{_logPrefix}: Invalid Data");
+                            continue;
+                        default:
+                            break;
                     }
-                    Debug.WriteLine($"{_logPrefix}: Timeout");
-                    continue;
                 }
                 catch (OperationCanceledException)
                 {
                     throw;
-                }
-                catch (InvalidDataException dataEx)
-                {
-                    Debug.WriteLine($"{_logPrefix}: Invalid Data: {dataEx.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -77,31 +82,41 @@ namespace SurronCommunication.Communication
             _communication.Write(toSend, token);
         }
 
-        public SurronDataPacket? ReceivePacket(int timeoutMillis, CancellationToken token)
+        public SurronReadResult ReceivePacket(int timeoutMillis, CancellationToken token, out SurronDataPacket? packet)
         {
             var buffer = new byte[512];
             var bufferPos = 0;
 
             var headerLength = SurronDataPacket.HeaderLength;
             if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, headerLength), timeoutMillis, token))
-                return null;
+            {
+                packet = null;
+                return SurronReadResult.Timeout;
+            }
             bufferPos += headerLength;
 
-            try
+            var restLength = SurronDataPacket.GetPacketLengthFromHeader(buffer.AsSpan(0, headerLength)) - headerLength;
+            if (restLength < 0)
             {
-                var restLength = SurronDataPacket.GetPacketLengthFromHeader(buffer.AsSpan(0, headerLength)) - headerLength;
-                if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, restLength), timeoutMillis, token))
-                    return null;
-                bufferPos += restLength;
+                packet = null;
+                return SurronReadResult.InvalidData;
+            }
 
-                Debug.WriteLine($"{_logPrefix}<{HexUtils.BytesToHex(buffer.AsSpan(0, bufferPos).ToArray())}");
-                return SurronDataPacket.FromBytes(buffer.AsSpan(0, bufferPos));
-            }
-            catch (InvalidDataException)
+            if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, restLength), timeoutMillis, token))
             {
-                _communication.DiscardInBuffer(token);
-                throw;
+                packet = null;
+                return SurronReadResult.Timeout;
             }
+            bufferPos += restLength;
+
+            Debug.WriteLine($"{_logPrefix}<{HexUtils.BytesToHex(buffer.AsSpan(0, bufferPos).ToArray())}");
+            packet = SurronDataPacket.FromBytes(buffer.AsSpan(0, bufferPos));
+            if (packet == null)
+            {
+                return SurronReadResult.InvalidData;
+            }
+
+            return SurronReadResult.Success;
         }
 
         public void Dispose()

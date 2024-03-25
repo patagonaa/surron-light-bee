@@ -37,7 +37,7 @@ namespace SurronCommunication_Logger
                         var receivedData = _bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, parameterToRead.Id, parameterToRead.Length, CancellationToken.None);
                         if (receivedData == null)
                         {
-                            Debug.WriteLine($"Timeout");
+                            Console.WriteLine($"BMS read error");
                         }
                         else
                         {

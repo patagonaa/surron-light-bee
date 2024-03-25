@@ -10,7 +10,7 @@ namespace SurronCommunication.Communication
         byte[]? ReadRegister(ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken);
 
         /// <returns>The received data packet. null on timeout.</returns>
-        SurronDataPacket? ReceivePacket(int timeoutMillis, CancellationToken token);
+        SurronReadResult ReceivePacket(int timeoutMillis, CancellationToken token, out SurronDataPacket? packet);
         void SendPacket(SurronDataPacket packet, CancellationToken token);
     }
 }

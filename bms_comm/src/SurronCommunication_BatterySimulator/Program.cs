@@ -46,9 +46,10 @@ namespace SurronCommunication.BatterySimulator
 
                     try
                     {
-                        var packet = communicationHandler.ReceivePacket(Timeout.Infinite, token)!;
-                        Console.WriteLine($"< {packet}");
-                        if (packet.Command == SurronCmd.ReadRequest &&
+                        var readResult = communicationHandler.ReceivePacket(Timeout.Infinite, token, out var packet)!;
+                        if (readResult == SurronReadResult.Success &&
+                            packet != null &&
+                            packet.Command == SurronCmd.ReadRequest &&
                             packet.Address == BmsParameters.BmsAddress &&
                             dataToReturn.TryGetValue(packet.Parameter, out var responseData))
                         {

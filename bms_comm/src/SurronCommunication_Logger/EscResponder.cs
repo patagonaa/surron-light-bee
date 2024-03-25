@@ -27,33 +27,28 @@ namespace SurronCommunication_Logger
         {
             while (true)
             {
-                try
-                {
-                    var packet = _escCommunicationHandler.ReceivePacket(Timeout.Infinite, CancellationToken.None)!;
+                _escCommunicationHandler.ReceivePacket(1000, CancellationToken.None, out var packet);
 
-                    if (packet.Command == SurronCmd.ReadRequest &&
-                        packet.Address == BmsParameters.BmsAddress)
+                if (packet != null &&
+                    packet.Command == SurronCmd.ReadRequest &&
+                    packet.Address == BmsParameters.BmsAddress)
+                {
+                    var responseData = (byte[])_currentValues[packet.Parameter];
+
+                    if (responseData == null || DateTime.UtcNow - _escResponseTimeout > _lastUpdate)
                     {
-                        var responseData = (byte[])_currentValues[packet.Parameter];
-
-                        if (responseData == null || DateTime.UtcNow - _escResponseTimeout > _lastUpdate)
-                        {
-                            Debug.WriteLine($"Parameter {packet.Parameter} is missing/outdated");
-                            continue;
-                        }
-
-                        var responseBuffer = new byte[packet.DataLength];
-                        // this copy here has two reasons:
-                        // - to get the requested length regardless of the actual field length
-                        // - to prevent a task switch during transmission to overwrite our data while we haven't completely read it.
-                        Array.Copy(responseData, responseBuffer, Math.Min(packet.DataLength, responseData.Length));
-
-                        var responsePacket = SurronDataPacket.Create(SurronCmd.ReadResponse, packet.Address, packet.Parameter, packet.DataLength, responseBuffer);
-                        _escCommunicationHandler.SendPacket(responsePacket, CancellationToken.None);
+                        Console.WriteLine($"Parameter {packet.Parameter} is missing/outdated");
+                        continue;
                     }
-                }
-                catch (InvalidDataException)
-                {
+
+                    var responseBuffer = new byte[packet.DataLength];
+                    // this copy here has two reasons:
+                    // - to get the requested length regardless of the actual field length
+                    // - to prevent a task switch during transmission to overwrite our data while we haven't completely read it.
+                    Array.Copy(responseData, responseBuffer, Math.Min(packet.DataLength, responseData.Length));
+
+                    var responsePacket = SurronDataPacket.Create(SurronCmd.ReadResponse, packet.Address, packet.Parameter, packet.DataLength, responseBuffer);
+                    _escCommunicationHandler.SendPacket(responsePacket, CancellationToken.None);
                 }
             }
         }

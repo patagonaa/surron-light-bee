@@ -24,6 +24,7 @@
     <Compile Include="..\SurronCommunication\Communication\ISurronCommunicationHandler.cs" Link="Communication\ISurronCommunicationHandler.cs" />
     <Compile Include="..\SurronCommunication\Communication\SerialCommunication.cs" Link="Communication\SerialCommunication.cs" />
     <Compile Include="..\SurronCommunication\Communication\SurronCommunicationHandler.cs" Link="Communication\SurronCommunicationHandler.cs" />
+    <Compile Include="..\SurronCommunication\Communication\SurronReadResult.cs" Link="Communication\SurronReadResult.cs" />
     <Compile Include="..\SurronCommunication\HexUtils.cs" Link="HexUtils.cs" />
     <Compile Include="..\SurronCommunication\Packet\SurronCmd.cs" Link="Packet\SurronCmd.cs" />
     <Compile Include="..\SurronCommunication\Packet\SurronDataPacket.cs" Link="Packet\SurronDataPacket.cs" />
