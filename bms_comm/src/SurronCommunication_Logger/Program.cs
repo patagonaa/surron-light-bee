@@ -21,8 +21,8 @@ namespace SurronCommunication_Logger
             Configuration.SetPinFunction(18, DeviceFunction.COM3_RX);
             Configuration.SetPinFunction(19, DeviceFunction.COM3_TX);
 
-            var bmsCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM3");
-            var escCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM2");
+            var bmsCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM3", "BMS");
+            var escCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM2", "ESC");
 
             while (true)
             {
@@ -30,13 +30,15 @@ namespace SurronCommunication_Logger
                 var response = bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, BmsParameters.RtcTime.Id, BmsParameters.RtcTime.Length, CancellationToken.None);
                 if (response != null)
                 {
-                    var rtcTime = new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]) + _utcBmsTimeOffset;
+                    var rtcTime = new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]);
                     Debug.WriteLine($"Got RTC Time: {rtcTime:s}");
-                    Rtc.SetSystemTime(rtcTime);
+                    var correctedTime = rtcTime + _utcBmsTimeOffset;
+                    Debug.WriteLine($"Correcting to: {correctedTime:s}");
+                    Rtc.SetSystemTime(correctedTime);
                     break;
                 }
+                Thread.Sleep(1000);
             }
-
             // BMS requester
             var parametersToRead = new ParameterDefinition[]
 {

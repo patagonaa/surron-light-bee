@@ -20,9 +20,9 @@ namespace SurronCommunication.Communication
             _logPrefix = logPrefix;
         }
 
-        public static SurronCommunicationHandler FromSerialPort(string serialPort)
+        public static SurronCommunicationHandler FromSerialPort(string serialPort, string? logPrefix = null)
         {
-            return new SurronCommunicationHandler(new SerialCommunication(serialPort), serialPort);
+            return new SurronCommunicationHandler(new SerialCommunication(serialPort), logPrefix ?? serialPort);
         }
 
         public byte[]? ReadRegister(ushort address, byte parameter, byte paramLength, CancellationToken cancellationToken)
@@ -48,7 +48,7 @@ namespace SurronCommunication.Communication
                         Debug.WriteLine($"Wrong Packet {packet}");
                         continue;
                     }
-                    Debug.WriteLine("Timeout");
+                    Debug.WriteLine($"{_logPrefix}: Timeout");
                     continue;
                 }
                 catch (OperationCanceledException)
@@ -57,11 +57,11 @@ namespace SurronCommunication.Communication
                 }
                 catch (InvalidDataException dataEx)
                 {
-                    Debug.WriteLine($"Invalid Data: {dataEx.Message}");
+                    Debug.WriteLine($"{_logPrefix}: Invalid Data: {dataEx.Message}");
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Unknown Exception: {ex}");
+                    Debug.WriteLine($"{_logPrefix}: Unknown Exception: {ex}");
                 }
 
                 Thread.Sleep(100); // can not be too high or else BMS goes back into standby (after ~3s)
