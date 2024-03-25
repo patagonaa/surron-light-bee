@@ -1,6 +1,15 @@
 # RS485 communication
 
-RS485 communication is done at 9600 baud 8N1. The battery always responds to requests, even when it is not actively enabled (using the 60V input).
+RS485 communication is done at 9600 baud 8N1.
+
+The BMS seems to have two sleep modes:
+
+- RS485 off
+    - happens after around 3 seconds, RS485 termination/pullup/pulldown is turned off and BMS takes some time / a few tries until it responds
+    - can be reenabled via RS485 communication, 60V input or button press, possibly with battery charging/discharging as well
+- standby
+    - happens after some minutes/hours
+    - can be reenabled with 60V input or button press, possibly with battery charging/discharging as well (though not via RS485)
 
 All messages seem to have the same structure:
 - Command (`46` = request, `47` = response, `57` = unsolicited)
