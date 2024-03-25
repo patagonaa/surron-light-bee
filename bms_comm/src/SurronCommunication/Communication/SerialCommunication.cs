@@ -14,6 +14,7 @@ namespace SurronCommunication.Communication
     internal class SerialCommunication : ICommunication
     {
         private readonly SerialPort _sp;
+        private readonly AutoResetEvent _dataReceivedEvent = new AutoResetEvent(false);
 
         public SerialCommunication(string serialPort)
         {
@@ -28,7 +29,13 @@ namespace SurronCommunication.Communication
             if (!_sp.IsOpen)
             {
                 _sp.Open();
+                _sp.DataReceived += OnDataReceived;
             }
+        }
+
+        private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            _dataReceivedEvent.Set();
         }
 
         public void Dispose()
@@ -63,31 +70,26 @@ namespace SurronCommunication.Communication
             var position = 0;
             var length = buffer.Length;
 
-            var waitMs = 10;
-            var totalRetries = timeoutMillis == Timeout.Infinite ? int.MaxValue : timeoutMillis / waitMs;
-            var retries = 0;
             var bufferArray = new byte[length];
             while (position < length)
             {
                 token.ThrowIfCancellationRequested();
                 var remainingBytes = length - position;
 
-                if (_sp.BytesToRead >= remainingBytes)
+                if (_sp.BytesToRead > 0)
                 {
-                    position += _sp.Read(bufferArray, position, remainingBytes);
+                    position += _sp.Read(bufferArray, position, _sp.BytesToRead > remainingBytes ? remainingBytes : _sp.BytesToRead);
                 }
                 else
                 {
-                    retries++;
-                    if (retries > totalRetries)
+                    var gotData = _dataReceivedEvent.WaitOne(timeoutMillis, false);
+                    if (!gotData)
                     {
                         return false;
                     }
-
-                    Thread.Sleep(waitMs);
                 }
             }
-            bufferArray.AsSpan(0, buffer.Length).CopyTo(buffer);
+            bufferArray.AsSpan(0, position).CopyTo(buffer);
             return true;
         }
     }

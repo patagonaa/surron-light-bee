@@ -87,13 +87,29 @@ namespace SurronCommunication.Communication
             var buffer = new byte[512];
             var bufferPos = 0;
 
+            const int cmdLength = 1;
+            while (true)
+            {
+                if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, cmdLength), timeoutMillis, token))
+                {
+                    packet = null;
+                    return SurronReadResult.Timeout;
+                }
+
+                if (buffer[0] == (byte)SurronCmd.ReadRequest || buffer[0] == (byte)SurronCmd.ReadResponse || buffer[0] == (byte)SurronCmd.Status)
+                    break;
+            }
+
+            bufferPos += cmdLength;
+
             var headerLength = SurronDataPacket.HeaderLength;
-            if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, headerLength), timeoutMillis, token))
+
+            if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, headerLength - cmdLength), timeoutMillis, token))
             {
                 packet = null;
                 return SurronReadResult.Timeout;
             }
-            bufferPos += headerLength;
+            bufferPos += headerLength - cmdLength;
 
             var restLength = SurronDataPacket.GetPacketLengthFromHeader(buffer.AsSpan(0, headerLength)) - headerLength;
             if (restLength < 0)
