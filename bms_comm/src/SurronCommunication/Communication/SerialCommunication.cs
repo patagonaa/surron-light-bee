@@ -76,9 +76,10 @@ namespace SurronCommunication.Communication
                 token.ThrowIfCancellationRequested();
                 var remainingBytes = length - position;
 
-                if (_sp.BytesToRead > 0)
+                var rxBufferBytes = _sp.BytesToRead;
+                if (rxBufferBytes > 0)
                 {
-                    position += _sp.Read(bufferArray, position, _sp.BytesToRead > remainingBytes ? remainingBytes : _sp.BytesToRead);
+                    position += _sp.Read(bufferArray, position, remainingBytes < rxBufferBytes ? remainingBytes : rxBufferBytes);
                 }
                 else
                 {
