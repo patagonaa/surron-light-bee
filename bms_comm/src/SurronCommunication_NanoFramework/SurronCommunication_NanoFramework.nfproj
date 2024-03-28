@@ -29,6 +29,7 @@
     <Compile Include="..\SurronCommunication\Packet\SurronCmd.cs" Link="Packet\SurronCmd.cs" />
     <Compile Include="..\SurronCommunication\Packet\SurronDataPacket.cs" Link="Packet\SurronDataPacket.cs" />
     <Compile Include="..\SurronCommunication\Parameter\BmsParameters.cs" Link="Parameter\BmsParameters.cs" />
+    <Compile Include="..\SurronCommunication\Parameter\EscParameters.cs" Link="Parameter\EscParameters.cs" />
     <Compile Include="..\SurronCommunication\Parameter\ParameterDefinition.cs" Link="Parameter\ParameterDefinition.cs" />
     <Compile Include="InvalidDataException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

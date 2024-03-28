@@ -39,7 +39,8 @@ namespace SurronCommunication.Communication
                 try
                 {
                     // 9600 baud 8N1 = ~960 bytes/s, so 200ms are enough for ~192 bytes.
-                    var result = ReceivePacket(100, cancellationToken, out var packet);
+                    // also, BMS takes some time to responsd sometimes when it is busy updating the display (>80ms in some cases)
+                    var result = ReceivePacket(200, cancellationToken, out var packet);
 
                     switch (result)
                     {

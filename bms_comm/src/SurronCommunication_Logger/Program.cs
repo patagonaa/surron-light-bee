@@ -6,6 +6,10 @@ using System.Diagnostics;
 using System.Threading;
 using System.Device.Gpio;
 using nanoFramework.Runtime.Native;
+using nanoFramework.System.IO.FileSystem;
+using System.Collections;
+using SurronCommunication;
+using System.Buffers.Binary;
 
 namespace SurronCommunication_Logger
 {
@@ -39,9 +43,10 @@ namespace SurronCommunication_Logger
                 }
                 Thread.Sleep(1000);
             }
+
             // BMS requester
             var parametersToRead = new ParameterDefinition[]
-{
+            {
                 // read by esc
                 BmsParameters.Unknown_7,
                 BmsParameters.Temperatures,
@@ -51,11 +56,11 @@ namespace SurronCommunication_Logger
 
                 // other stuff
                 BmsParameters.BatteryCurrent,
-                //BmsParameters.RemainingCapacity,
-                //BmsParameters.TotalCapacity,
-                //BmsParameters.ChargeCycles,
-                //BmsParameters.Statistics,
-                //BmsParameters.History,
+                BmsParameters.RemainingCapacity,
+                BmsParameters.TotalCapacity,
+                BmsParameters.ChargeCycles,
+                BmsParameters.Statistics,
+                BmsParameters.History,
             };
 
             var bmsRequester = new BmsRequester(bmsCommunicationHandler, parametersToRead);
@@ -78,8 +83,31 @@ namespace SurronCommunication_Logger
             escRespondThread.Start();
 
             // Logger
-            var dataLogger = new DataLogger();
+
+            // TODO: mount SD card
+
+            //Configuration.SetPinFunction(Gpio.IO13, DeviceFunction.SPI1_MISO);
+            //Configuration.SetPinFunction(Gpio.IO11, DeviceFunction.SPI1_MOSI);
+            //Configuration.SetPinFunction(Gpio.IO12, DeviceFunction.SPI1_CLOCK);
+
+            //var sdCard = new SDCard(new SDCard.SDCardSpiParameters { spiBus = 1, chipSelectPin = 46 });
+            //while (!sdCard.IsMounted)
+            //{
+            //    try
+            //    {
+            //        Console.WriteLine("Trying to mount SD card");
+            //        sdCard.Mount();
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine($"Mount failed: {ex.Message}");
+            //        Thread.Sleep(1000);
+            //    }
+            //}
+            
+            var dataLogger = new DataLogger($"I:\\log_{DateTime.UtcNow:yyyy'-'MM'-'dd'_'HH'-'mm'-'ss}.ndjson");
             bmsRequester.ParameterUpdateEvent += dataLogger.SetData;
+            escResponder.ParameterUpdateEvent += dataLogger.SetData;
             var dataLoggerThread = new Thread(() => dataLogger.Run());
             dataLoggerThread.Start();
 

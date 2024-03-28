@@ -4,27 +4,31 @@ using SurronCommunication.Parameter;
 using System;
 using System.Collections;
 using System.Diagnostics;
-using System.IO;
 using System.Threading;
 
 namespace SurronCommunication_Logger
 {
     internal class EscResponder
     {
+        public event ParameterUpdateEventHandler? ParameterUpdateEvent;
+
         private static readonly TimeSpan _escResponseTimeout = TimeSpan.FromSeconds(10);
         private readonly SurronCommunicationHandler _escCommunicationHandler;
         private readonly byte[] _escReadParameters;
-        private readonly Hashtable _currentValues = new Hashtable();
+        private readonly Hashtable _currentValues;
         private DateTime _lastUpdate = DateTime.MinValue;
 
         public EscResponder(SurronCommunicationHandler escCommunicationHandler, byte[] escReadParameters)
         {
             _escCommunicationHandler = escCommunicationHandler;
             _escReadParameters = escReadParameters;
+            _currentValues = new Hashtable(escReadParameters.Length);
         }
 
         public void Run()
         {
+            var escStatus = new Hashtable();
+
             while (true)
             {
                 var result = _escCommunicationHandler.ReceivePacket(Timeout.Infinite, CancellationToken.None, out var packet);
@@ -54,6 +58,14 @@ namespace SurronCommunication_Logger
                                 var responsePacket = SurronDataPacket.Create(SurronCmd.ReadResponse, packet.Address, packet.Parameter, packet.DataLength, responseBuffer);
                                 _escCommunicationHandler.SendPacket(responsePacket, CancellationToken.None);
                             }
+
+                            if (packet != null &&
+                                packet.Command == SurronCmd.Status &&
+                                packet.Address == 0x183)
+                            {
+                                escStatus[packet.Parameter] = packet.CommandData;
+                                ParameterUpdateEvent?.Invoke(DateTime.UtcNow, packet.Address, escStatus);
+                            }
                             continue;
                         }
                     case SurronReadResult.Timeout:
@@ -67,7 +79,7 @@ namespace SurronCommunication_Logger
             }
         }
 
-        public void SetData(DateTime updateTime, Hashtable newData)
+        public void SetBmsData(DateTime updateTime, ushort address, Hashtable newData)
         {
             foreach (var requestedKey in _escReadParameters)
             {

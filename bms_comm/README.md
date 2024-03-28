@@ -29,6 +29,8 @@ Points in case:
 - unsolicited messages (`57`) contain the data received in the responses with a slight delay
 - unsolicited messages (`57`) contain multiple parameters (like battery percentage, battery voltage, status, etc.), which suggest those messages are aimed at the display.
 
+Be aware: when the BMS display is on (60V input or button pressed), the BMS takes pretty long to respond sometimes (normal: ~10ms, when display is on: 80ms, maybe longer), probably as the microcontroller is busy updating the display.
+
 ## Commands
 ## `46` (Request)
 request for a value / list of values

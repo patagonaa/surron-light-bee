@@ -13,8 +13,7 @@ namespace SurronCommunication_Logger
         private readonly ISurronCommunicationHandler _bmsCommunicationHandler;
         private readonly ParameterDefinition[] _parametersToRead;
 
-        public event ParameterUpdate? ParameterUpdateEvent;
-        public delegate void ParameterUpdate(DateTime updateTime, Hashtable newData);
+        public event ParameterUpdateEventHandler? ParameterUpdateEvent;
 
         public BmsRequester(ISurronCommunicationHandler bmsCommunicationHandler, ParameterDefinition[] parametersToRead)
         {
@@ -24,7 +23,7 @@ namespace SurronCommunication_Logger
 
         public void Run()
         {
-            var currentValues = new Hashtable();
+            var currentValues = new Hashtable(_parametersToRead.Length);
 
             while (true)
             {
@@ -56,7 +55,7 @@ namespace SurronCommunication_Logger
                         Thread.Sleep(10);
                     }
                     if (anyUpdated)
-                        ParameterUpdateEvent?.Invoke(now, currentValues);
+                        ParameterUpdateEvent?.Invoke(now, BmsParameters.BmsAddress, currentValues);
                 }
                 catch (InvalidDataException ex)
                 {
