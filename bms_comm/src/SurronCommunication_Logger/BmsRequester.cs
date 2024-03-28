@@ -53,6 +53,7 @@ namespace SurronCommunication_Logger
                                 Array.Copy(receivedData, currentValue, parameterToRead.Length);
                             }
                         }
+                        Thread.Sleep(10);
                     }
                     if (anyUpdated)
                         ParameterUpdateEvent?.Invoke(now, currentValues);
@@ -62,7 +63,7 @@ namespace SurronCommunication_Logger
                     Debug.WriteLine($"Invalid: {ex.Message}");
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
             }
         }
     }

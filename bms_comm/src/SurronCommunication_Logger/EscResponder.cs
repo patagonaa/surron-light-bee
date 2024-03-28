@@ -27,28 +27,42 @@ namespace SurronCommunication_Logger
         {
             while (true)
             {
-                _escCommunicationHandler.ReceivePacket(1000, CancellationToken.None, out var packet);
+                var result = _escCommunicationHandler.ReceivePacket(Timeout.Infinite, CancellationToken.None, out var packet);
 
-                if (packet != null &&
-                    packet.Command == SurronCmd.ReadRequest &&
-                    packet.Address == BmsParameters.BmsAddress)
+                switch (result)
                 {
-                    var responseData = (byte[])_currentValues[packet.Parameter];
+                    case SurronReadResult.Success:
+                        {
+                            if (packet != null &&
+                                packet.Command == SurronCmd.ReadRequest &&
+                                packet.Address == BmsParameters.BmsAddress)
+                            {
+                                var responseData = (byte[])_currentValues[packet.Parameter];
 
-                    if (responseData == null || DateTime.UtcNow - _escResponseTimeout > _lastUpdate)
-                    {
-                        Console.WriteLine($"Parameter {packet.Parameter} is missing/outdated");
+                                if (responseData == null || DateTime.UtcNow - _escResponseTimeout > _lastUpdate)
+                                {
+                                    Console.WriteLine($"Parameter {packet.Parameter} is missing/outdated");
+                                    continue;
+                                }
+
+                                var responseBuffer = new byte[packet.DataLength];
+                                // this copy here has two reasons:
+                                // - to get the requested length regardless of the actual field length
+                                // - to prevent a task switch during transmission to overwrite our data while we haven't completely read it.
+                                Array.Copy(responseData, responseBuffer, Math.Min(packet.DataLength, responseData.Length));
+
+                                var responsePacket = SurronDataPacket.Create(SurronCmd.ReadResponse, packet.Address, packet.Parameter, packet.DataLength, responseBuffer);
+                                _escCommunicationHandler.SendPacket(responsePacket, CancellationToken.None);
+                            }
+                            continue;
+                        }
+                    case SurronReadResult.Timeout:
                         continue;
-                    }
-
-                    var responseBuffer = new byte[packet.DataLength];
-                    // this copy here has two reasons:
-                    // - to get the requested length regardless of the actual field length
-                    // - to prevent a task switch during transmission to overwrite our data while we haven't completely read it.
-                    Array.Copy(responseData, responseBuffer, Math.Min(packet.DataLength, responseData.Length));
-
-                    var responsePacket = SurronDataPacket.Create(SurronCmd.ReadResponse, packet.Address, packet.Parameter, packet.DataLength, responseBuffer);
-                    _escCommunicationHandler.SendPacket(responsePacket, CancellationToken.None);
+                    case SurronReadResult.InvalidData:
+                        Console.WriteLine("ESC: Invalid Data");
+                        continue;
+                    default:
+                        throw new NotSupportedException();
                 }
             }
         }

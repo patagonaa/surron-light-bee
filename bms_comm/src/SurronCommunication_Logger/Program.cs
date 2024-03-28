@@ -15,11 +15,11 @@ namespace SurronCommunication_Logger
 
         public static void Main()
         {
-            Configuration.SetPinFunction(16, DeviceFunction.COM2_RX);
-            Configuration.SetPinFunction(17, DeviceFunction.COM2_TX);
+            Configuration.SetPinFunction(Gpio.IO16, DeviceFunction.COM2_RX);
+            Configuration.SetPinFunction(Gpio.IO17, DeviceFunction.COM2_TX);
 
-            Configuration.SetPinFunction(18, DeviceFunction.COM3_RX);
-            Configuration.SetPinFunction(19, DeviceFunction.COM3_TX);
+            Configuration.SetPinFunction(Gpio.IO18, DeviceFunction.COM3_RX);
+            Configuration.SetPinFunction(Gpio.IO19, DeviceFunction.COM3_TX);
 
             var bmsCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM3", "BMS");
             var escCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM2", "ESC");
