@@ -36,10 +36,6 @@
     <Compile Include="SpanExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Parameter\" />
-    <Folder Include="Packet\" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="mscorlib">
       <HintPath>..\packages\nanoFramework.CoreLibrary.1.15.5\lib\mscorlib.dll</HintPath>
     </Reference>
