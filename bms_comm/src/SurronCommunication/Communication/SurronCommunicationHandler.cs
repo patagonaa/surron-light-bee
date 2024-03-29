@@ -1,7 +1,6 @@
 ﻿using SurronCommunication.Packet;
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Threading;
 #if NANOFRAMEWORK_1_0
 using System.Buffers.Binary;
@@ -79,7 +78,7 @@ namespace SurronCommunication.Communication
         public void SendPacket(SurronDataPacket packet, CancellationToken token)
         {
             var toSend = packet.ToBytes();
-            Debug.WriteLine($"{_logPrefix}>{HexUtils.BytesToHex(toSend)}");
+            //Debug.WriteLine($"{_logPrefix}>{HexUtils.BytesToHex(toSend)}");
             _communication.Write(toSend, token);
         }
 
@@ -126,7 +125,7 @@ namespace SurronCommunication.Communication
             }
             bufferPos += restLength;
 
-            Debug.WriteLine($"{_logPrefix}<{HexUtils.BytesToHex(buffer.AsSpan(0, bufferPos).ToArray())}");
+            //Debug.WriteLine($"{_logPrefix}<{HexUtils.BytesToHex(buffer.AsSpan(0, bufferPos).ToArray())}");
             packet = SurronDataPacket.FromBytes(buffer.AsSpan(0, bufferPos));
             if (packet == null)
             {
