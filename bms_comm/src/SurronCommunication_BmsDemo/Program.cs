@@ -34,29 +34,29 @@ namespace SurronCommunication_BmsDemo
             var allParameters = BmsParameters.GetAll();
             var defaultParameters = new[]
             {
-                BmsParameters.Temperatures,
-                BmsParameters.BatteryVoltage,
-                BmsParameters.BatteryCurrent,
-                BmsParameters.BatteryPercent,
-                BmsParameters.BatteryHealth,
-                BmsParameters.RemainingCapacity,
-                BmsParameters.TotalCapacity,
-                BmsParameters.Statistics,
-                BmsParameters.ChargeCycles,
-                BmsParameters.DesignedCapacity,
-                BmsParameters.ManufacturingDate,
-                BmsParameters.BmsManufacturer,
-                BmsParameters.BatteryModel,
-                BmsParameters.CellType,
-                BmsParameters.SerialNumber,
-                BmsParameters.CellVoltages1,
-                BmsParameters.CellVoltages2,
-                BmsParameters.History
+                BmsParameters.Parameters.Temperatures,
+                BmsParameters.Parameters.BatteryVoltage,
+                BmsParameters.Parameters.BatteryCurrent,
+                BmsParameters.Parameters.BatteryPercent,
+                BmsParameters.Parameters.BatteryHealth,
+                BmsParameters.Parameters.RemainingCapacity,
+                BmsParameters.Parameters.TotalCapacity,
+                BmsParameters.Parameters.Statistics,
+                BmsParameters.Parameters.ChargeCycles,
+                BmsParameters.Parameters.DesignedCapacity,
+                BmsParameters.Parameters.ManufacturingDate,
+                BmsParameters.Parameters.BmsManufacturer,
+                BmsParameters.Parameters.BatteryModel,
+                BmsParameters.Parameters.CellType,
+                BmsParameters.Parameters.SerialNumber,
+                BmsParameters.Parameters.CellVoltages1,
+                BmsParameters.Parameters.CellVoltages2,
+                BmsParameters.Parameters.History
             };
             var parametersOption = new Option<string[]>(
                 "--parameter",
-                () => allParameters.Where(x => defaultParameters.Any(y => x.Definition == y)).Select(x => x.ParameterName).ToArray(),
-                $"Parameters to read from BMS (number / name). Known parameters: {string.Join(", ", allParameters.Select(x => $"{x.ParameterName}({x.Definition.Id})"))}");
+                () => allParameters.Where(x => defaultParameters.Any(y => x == y)).Select(x => x.ToString()).ToArray(),
+                $"Parameters to read from BMS (number / name). Known parameters: {string.Join(", ", allParameters.Select(x => $"{x.ToString()}({(byte)x})"))}");
             rootCommand.AddOption(parametersOption);
 
             rootCommand.SetHandler(async context =>
@@ -65,7 +65,7 @@ namespace SurronCommunication_BmsDemo
                 var readInterval = context.ParseResult.GetValueForOption(readIntervalOption);
 
                 var argParameters = context.ParseResult.GetValueForOption(parametersOption)!;
-                var parameters = argParameters.Select(x => GetParamByString(allParameters, x)).ToList();
+                var parameters = argParameters.Select(x => GetParamByString(x)).ToList();
 
                 var logOnlyChanges = context.ParseResult.GetValueForOption(onlyChangesOption);
                 var logFileText = context.ParseResult.GetValueForOption(logTextOption);
@@ -77,7 +77,7 @@ namespace SurronCommunication_BmsDemo
             await rootCommand.InvokeAsync(args);
         }
 
-        private static async Task Run(string serialPort, List<ParameterDefinition> registers, int? readInterval, bool logOnlyChanges, string? logFileText, string? logFileHex, CancellationToken cancellationToken)
+        private static async Task Run(string serialPort, List<BmsParameters.Parameters> registers, int? readInterval, bool logOnlyChanges, string? logFileText, string? logFileHex, CancellationToken cancellationToken)
         {
             const ushort bmsAddress = BmsParameters.BmsAddress;
 
@@ -94,8 +94,8 @@ namespace SurronCommunication_BmsDemo
                     logger.BeginTransmission();
                     foreach (var register in registers)
                     {
-                        var registerId = register.Id;
-                        var registerLength = register.Length;
+                        var registerId = (byte)register;
+                        var registerLength = BmsParameters.GetLength(register);
 
                         var newValue = communicationHandler.ReadRegister(bmsAddress, registerId, registerLength, cancellationToken);
 
@@ -133,33 +133,33 @@ namespace SurronCommunication_BmsDemo
 
         private static Dictionary<byte, Func<byte[], string>> GetRegisterFormatHandlers()
         {
-            var registerFormatHandlers = new Dictionary<byte, Func<byte[], string>>
+            var registerFormatHandlers = new Dictionary<BmsParameters.Parameters, Func<byte[], string>>
             {
-                { BmsParameters.Temperatures.Id, response => $"Temperatures: Cells: {string.Join(' ', response[0..3].Select(x => $"{(sbyte)x,3:0}°C"))} Discharge FET: {(sbyte)response[4],3:0}°C Charge FET: {(sbyte)response[5],3:0}°C Soft Start Circuit: {(sbyte)response[6],3:0}°C"},
-                { BmsParameters.BatteryVoltage.Id, response => $"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
-                { BmsParameters.BatteryCurrent.Id, response => $"Battery Current: {BinaryPrimitives.ReadInt32LittleEndian(response) / 1000m,8:#00.000}A"},
-                { BmsParameters.BatteryPercent.Id, response => $"Battery Percent: {response[0],3}%"},
-                { BmsParameters.BatteryHealth.Id, response => $"Battery Health: {response[0],3}%"},
-                { BmsParameters.RemainingCapacity.Id, response => $"Remaining Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
-                { BmsParameters.TotalCapacity.Id, response => $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
-                { BmsParameters.Statistics.Id, response =>
+                { BmsParameters.Parameters.Temperatures, response => $"Temperatures: Cells: {string.Join(' ', response[0..3].Select(x => $"{(sbyte)x,3:0}°C"))} Discharge FET: {(sbyte)response[4],3:0}°C Charge FET: {(sbyte)response[5],3:0}°C Soft Start Circuit: {(sbyte)response[6],3:0}°C"},
+                { BmsParameters.Parameters.BatteryVoltage, response => $"Battery Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
+                { BmsParameters.Parameters.BatteryCurrent, response => $"Battery Current: {BinaryPrimitives.ReadInt32LittleEndian(response) / 1000m,8:#00.000}A"},
+                { BmsParameters.Parameters.BatteryPercent, response => $"Battery Percent: {response[0],3}%"},
+                { BmsParameters.Parameters.BatteryHealth, response => $"Battery Health: {response[0],3}%"},
+                { BmsParameters.Parameters.RemainingCapacity, response => $"Remaining Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
+                { BmsParameters.Parameters.TotalCapacity, response => $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
+                { BmsParameters.Parameters.Statistics, response =>
                 {
                     return
                         $"Total Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,6:0.000}Ah " +
                         $"Lifetime Charged Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(4, 4)) / 1000m,10:0.000}Ah " +
                         $"Current Cycle Charged Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response.AsSpan(8, 4)) / 1000m,6:0.000}Ah";
                 }},
-                { BmsParameters.ChargeCycles.Id, response => $"Charge Cycles: {BinaryPrimitives.ReadUInt32LittleEndian(response),4}"},
-                { BmsParameters.DesignedCapacity.Id, response => $"Designed Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
-                { BmsParameters.DesignedVoltage.Id, response => $"Designed Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
-                { BmsParameters.Versions.Id, response => $"SW Version: {new Version(response[1], response[0])} HW Version: {new Version(response[3], response[2])} IDX: {AsciiToString(response.AsSpan(4, 4))}"},
-                { BmsParameters.ManufacturingDate.Id, response => $"Manufacturing Date: {new DateOnly(2000 + response[0], response[1], response[2]):yyyy'-'MM'-'dd}"},
-                { BmsParameters.RtcTime.Id, response => $"RTC Time: {new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]):s}"},
-                { BmsParameters.BmsManufacturer.Id, response => $"BMS Manufacturer: {AsciiToString(response)}" },
-                { BmsParameters.BatteryModel.Id, response => $"Battery Model: {AsciiToString(response)}" },
-                { BmsParameters.CellType.Id, response => $"Cell Type: {AsciiToString(response)}" },
-                { BmsParameters.SerialNumber.Id, response => $"Serial Number: {AsciiToString(response)}" },
-                { BmsParameters.CellVoltages1.Id, response =>
+                { BmsParameters.Parameters.ChargeCycles, response => $"Charge Cycles: {BinaryPrimitives.ReadUInt32LittleEndian(response),4}"},
+                { BmsParameters.Parameters.DesignedCapacity, response => $"Designed Capacity: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m,6:0.000}Ah"},
+                { BmsParameters.Parameters.DesignedVoltage, response => $"Designed Voltage: {BinaryPrimitives.ReadUInt32LittleEndian(response) / 1000m:00.000}V"},
+                { BmsParameters.Parameters.Versions, response => $"SW Version: {new Version(response[1], response[0])} HW Version: {new Version(response[3], response[2])} IDX: {AsciiToString(response.AsSpan(4, 4))}"},
+                { BmsParameters.Parameters.ManufacturingDate, response => $"Manufacturing Date: {new DateOnly(2000 + response[0], response[1], response[2]):yyyy'-'MM'-'dd}"},
+                { BmsParameters.Parameters.RtcTime, response => $"RTC Time: {new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]):s}"},
+                { BmsParameters.Parameters.BmsManufacturer, response => $"BMS Manufacturer: {AsciiToString(response)}" },
+                { BmsParameters.Parameters.BatteryModel, response => $"Battery Model: {AsciiToString(response)}" },
+                { BmsParameters.Parameters.CellType, response => $"Cell Type: {AsciiToString(response)}" },
+                { BmsParameters.Parameters.SerialNumber, response => $"Serial Number: {AsciiToString(response)}" },
+                { BmsParameters.Parameters.CellVoltages1, response =>
                     {
                         var voltages = new List<decimal>();
                         for (int batIdx = 0; batIdx < 16; batIdx++)
@@ -169,7 +169,7 @@ namespace SurronCommunication_BmsDemo
                         return $"Cell Voltages 1: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}";
                     }
                 },
-                { BmsParameters.CellVoltages2.Id, response =>
+                { BmsParameters.Parameters.CellVoltages2, response =>
                     {
                         var voltages = new List<decimal>();
                         for (int batIdx = 0; batIdx < 16; batIdx++)
@@ -179,7 +179,7 @@ namespace SurronCommunication_BmsDemo
                         return $"Cell Voltages 2: {string.Join(' ', voltages.Select(x => $"{x:0.000}V"))}";
                     }
                 },
-                { BmsParameters.History.Id, response =>
+                { BmsParameters.Parameters.History, response =>
                     {
                         return
                             $"OutMax: {BinaryPrimitives.ReadInt32LittleEndian(response.AsSpan(0, 4)) / 1000m,7:#00.000}A " +
@@ -191,7 +191,7 @@ namespace SurronCommunication_BmsDemo
                     }
                 }
             };
-            return registerFormatHandlers;
+            return registerFormatHandlers.ToDictionary(x => (byte)x.Key, x => x.Value);
         }
 
         private static string AsciiToString(Span<byte> bytes)
@@ -200,31 +200,16 @@ namespace SurronCommunication_BmsDemo
             return Encoding.ASCII.GetString(bytes.Slice(0, nulIdx > -1 ? nulIdx : bytes.Length));
         }
 
-        private static ParameterDefinition GetParamByString(IList<(string ParameterName, ParameterDefinition Definition)> allParameters, string str)
+        private static BmsParameters.Parameters GetParamByString(string str)
         {
-            ParameterDefinition toReturn;
-
-            if (byte.TryParse(str, out byte parsed))
+            if (Enum.TryParse<BmsParameters.Parameters>(str.Trim(), out var parsed))
             {
-                var foundParameter = allParameters.SingleOrDefault(x => x.Definition.Id == parsed).Definition;
-                if (foundParameter.Length != 0)
-                {
-                    toReturn = foundParameter;
-                }
-                else
-                {
-                    toReturn = new ParameterDefinition(parsed, 64);
-                }
+                return parsed;
             }
             else
             {
-                toReturn = allParameters.SingleOrDefault(x => x.ParameterName == str.Trim()).Definition;
-            }
-
-            if (toReturn.Length == 0)
                 throw new ArgumentException($"String \"{str}\" is not a valid BMS parameter");
-
-            return toReturn;
+            }
         }
 
         private class Logger : IDisposable

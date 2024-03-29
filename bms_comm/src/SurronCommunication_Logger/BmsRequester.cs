@@ -11,11 +11,11 @@ namespace SurronCommunication_Logger
     internal class BmsRequester
     {
         private readonly ISurronCommunicationHandler _bmsCommunicationHandler;
-        private readonly ParameterDefinition[] _parametersToRead;
+        private readonly BmsParameters.Parameters[] _parametersToRead;
 
         public event ParameterUpdateEventHandler? ParameterUpdateEvent;
 
-        public BmsRequester(ISurronCommunicationHandler bmsCommunicationHandler, ParameterDefinition[] parametersToRead)
+        public BmsRequester(ISurronCommunicationHandler bmsCommunicationHandler, BmsParameters.Parameters[] parametersToRead)
         {
             _bmsCommunicationHandler = bmsCommunicationHandler;
             _parametersToRead = parametersToRead;
@@ -33,7 +33,8 @@ namespace SurronCommunication_Logger
                     var anyUpdated = false;
                     foreach (var parameterToRead in _parametersToRead)
                     {
-                        var receivedData = _bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, parameterToRead.Id, parameterToRead.Length, CancellationToken.None);
+                        var paramLength = BmsParameters.GetLength(parameterToRead);
+                        var receivedData = _bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)parameterToRead, paramLength, CancellationToken.None);
                         if (receivedData == null)
                         {
                             Console.WriteLine($"BMS read error");
@@ -41,15 +42,15 @@ namespace SurronCommunication_Logger
                         else
                         {
                             anyUpdated = true;
-                            var currentValue = (byte[])currentValues[parameterToRead.Id];
+                            var currentValue = (byte[])currentValues[(byte)parameterToRead];
 
                             if (currentValue == null)
                             {
-                                currentValues[parameterToRead.Id] = receivedData;
+                                currentValues[(byte)parameterToRead] = receivedData;
                             }
                             else
                             {
-                                Array.Copy(receivedData, currentValue, parameterToRead.Length);
+                                Array.Copy(receivedData, currentValue, paramLength);
                             }
                         }
                         Thread.Sleep(10);

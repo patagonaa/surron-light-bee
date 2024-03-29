@@ -31,7 +31,7 @@ namespace SurronCommunication_Logger
             while (true)
             {
                 Debug.WriteLine("Trying to read BMS RTC...");
-                var response = bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, BmsParameters.RtcTime.Id, BmsParameters.RtcTime.Length, CancellationToken.None);
+                var response = bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)BmsParameters.Parameters.RtcTime, BmsParameters.GetLength(BmsParameters.Parameters.RtcTime), CancellationToken.None);
                 if (response != null)
                 {
                     var rtcTime = new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]);
@@ -45,22 +45,22 @@ namespace SurronCommunication_Logger
             }
 
             // BMS requester
-            var parametersToRead = new ParameterDefinition[]
+            var parametersToRead = new BmsParameters.Parameters[]
             {
                 // read by esc
-                BmsParameters.Unknown_7,
-                BmsParameters.Temperatures,
-                BmsParameters.BatteryVoltage,
-                BmsParameters.BatteryPercent,
-                BmsParameters.BmsStatus,
+                BmsParameters.Parameters.Unknown_7,
+                BmsParameters.Parameters.Temperatures,
+                BmsParameters.Parameters.BatteryVoltage,
+                BmsParameters.Parameters.BatteryPercent,
+                BmsParameters.Parameters.BmsStatus,
 
                 // other stuff
-                BmsParameters.BatteryCurrent,
-                BmsParameters.RemainingCapacity,
-                BmsParameters.TotalCapacity,
-                BmsParameters.ChargeCycles,
-                BmsParameters.Statistics,
-                BmsParameters.History,
+                BmsParameters.Parameters.BatteryCurrent,
+                BmsParameters.Parameters.RemainingCapacity,
+                BmsParameters.Parameters.TotalCapacity,
+                BmsParameters.Parameters.ChargeCycles,
+                BmsParameters.Parameters.Statistics,
+                BmsParameters.Parameters.History,
             };
 
             var bmsRequester = new BmsRequester(bmsCommunicationHandler, parametersToRead);
@@ -69,16 +69,16 @@ namespace SurronCommunication_Logger
             bmsReadThread.Start();
 
             // ESC request responder
-            var escReadParameters = new byte[]
+            var escReadParameters = new BmsParameters.Parameters[]
             {
-                BmsParameters.Unknown_7.Id,
-                BmsParameters.Temperatures.Id,
-                BmsParameters.BatteryVoltage.Id,
-                BmsParameters.BatteryPercent.Id,
-                BmsParameters.BmsStatus.Id,
+                BmsParameters.Parameters.Unknown_7,
+                BmsParameters.Parameters.Temperatures,
+                BmsParameters.Parameters.BatteryVoltage,
+                BmsParameters.Parameters.BatteryPercent,
+                BmsParameters.Parameters.BmsStatus,
             };
             var escResponder = new EscResponder(escCommunicationHandler, escReadParameters);
-            bmsRequester.ParameterUpdateEvent += escResponder.SetData;
+            bmsRequester.ParameterUpdateEvent += escResponder.SetBmsData;
             var escRespondThread = new Thread(() => escResponder.Run());
             escRespondThread.Start();
 

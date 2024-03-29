@@ -14,11 +14,11 @@ namespace SurronCommunication_Logger
 
         private static readonly TimeSpan _escResponseTimeout = TimeSpan.FromSeconds(10);
         private readonly SurronCommunicationHandler _escCommunicationHandler;
-        private readonly byte[] _escReadParameters;
+        private readonly BmsParameters.Parameters[] _escReadParameters;
         private readonly Hashtable _currentValues;
         private DateTime _lastUpdate = DateTime.MinValue;
 
-        public EscResponder(SurronCommunicationHandler escCommunicationHandler, byte[] escReadParameters)
+        public EscResponder(SurronCommunicationHandler escCommunicationHandler, BmsParameters.Parameters[] escReadParameters)
         {
             _escCommunicationHandler = escCommunicationHandler;
             _escReadParameters = escReadParameters;
@@ -81,8 +81,9 @@ namespace SurronCommunication_Logger
 
         public void SetBmsData(DateTime updateTime, ushort address, Hashtable newData)
         {
-            foreach (var requestedKey in _escReadParameters)
+            foreach (var readParameter in _escReadParameters)
             {
+                var requestedKey = (byte)readParameter;
                 var sourceArray = (byte[])newData[requestedKey];
 
                 if (sourceArray != null)

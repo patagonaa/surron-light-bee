@@ -15,28 +15,28 @@ namespace SurronCommunication_EscSimulator
 
             using var communicationHandler = SurronCommunicationHandler.FromSerialPort("COM11");
 
-            var parametersToRead = new List<ParameterDefinition>
+            var parametersToRead = new List<BmsParameters.Parameters>
             {
-                BmsParameters.Unknown_7,
-                BmsParameters.Temperatures,
-                BmsParameters.BatteryVoltage,
-                BmsParameters.BatteryPercent,
-                BmsParameters.BmsStatus,
+                BmsParameters.Parameters.Unknown_7,
+                BmsParameters.Parameters.Temperatures,
+                BmsParameters.Parameters.BatteryVoltage,
+                BmsParameters.Parameters.BatteryPercent,
+                BmsParameters.Parameters.BmsStatus,
             };
 
             try
             {
                 while (true)
-                {   
+                {
                     token.ThrowIfCancellationRequested();
 
                     foreach (var paramToRead in parametersToRead)
                     {
-                        var response = communicationHandler.ReadRegister(BmsParameters.BmsAddress, paramToRead.Id, paramToRead.Length, token);
+                        var response = communicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)paramToRead, BmsParameters.GetLength(paramToRead), token);
                         if (response != null)
-                            Console.WriteLine($"{paramToRead.Id,3}: {HexUtils.BytesToHex(response)}");
+                            Console.WriteLine($"{paramToRead,3}: {HexUtils.BytesToHex(response)}");
                         else
-                            Console.WriteLine($"{paramToRead.Id,3}: <Timeout>");
+                            Console.WriteLine($"{paramToRead,3}: <Timeout>");
                         Thread.Sleep(100);
                     }
                 }
