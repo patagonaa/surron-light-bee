@@ -61,6 +61,7 @@ namespace SurronCommunication_Logger
                 BmsParameters.Parameters.ChargeCycles,
                 BmsParameters.Parameters.Statistics,
                 BmsParameters.Parameters.History,
+                BmsParameters.Parameters.CellVoltages1,
             };
 
             var bmsRequester = new BmsRequester(bmsCommunicationHandler, parametersToRead);

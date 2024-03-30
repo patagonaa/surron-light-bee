@@ -1,12 +1,8 @@
-﻿using nanoFramework.Json;
-using nanoFramework.Json.Configuration;
-using nanoFramework.Json.Converters;
-using SurronCommunication;
+﻿using SurronCommunication.Parameter.Logging;
 using System;
 using System.Collections;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading;
 
 namespace SurronCommunication_Logger
@@ -23,8 +19,6 @@ namespace SurronCommunication_Logger
 
         public DataLogger(string path)
         {
-            ConvertersMapping.Add(typeof(JsonBase64Wrapper), new JsonBase64WrapperConverter());
-
             var files = Directory.GetFiles("I:");
             //foreach (var file in files)
             //{
@@ -36,8 +30,8 @@ namespace SurronCommunication_Logger
 
         public void Run()
         {
-            var jsonBuffer = new byte[_writeChunkSize * 2];
-            var jsonBufferPos = 0;
+            var buffer = new byte[_writeChunkSize * 2];
+            var bufferPos = 0;
 
             while (true)
             {
@@ -53,19 +47,16 @@ namespace SurronCommunication_Logger
                     continue;
                 }
 
-                var json = JsonConvert.SerializeObject(logEntry);
+                bufferPos += LogSerializer.Serialize(buffer, logEntry);
                 Thread.Sleep(0);
-                Debug.WriteLine(json);
-                jsonBufferPos += Encoding.UTF8.GetBytes(json, 0, json.Length, jsonBuffer, jsonBufferPos);
-                jsonBuffer[jsonBufferPos++] = (byte)'\n';
 
-                //TODO: if json is longer than writeChunkSize, this may break
-                if (jsonBufferPos >= _writeChunkSize)
+                //TODO: if entry is longer than writeChunkSize, this may break
+                if (bufferPos >= _writeChunkSize)
                 {
-                    WriteToFile(jsonBuffer, 0, _writeChunkSize);
+                    WriteToFile(buffer, 0, _writeChunkSize);
                     Thread.Sleep(0);
-                    Array.Copy(jsonBuffer, _writeChunkSize, jsonBuffer, 0, _writeChunkSize);
-                    jsonBufferPos -= _writeChunkSize;
+                    Array.Copy(buffer, _writeChunkSize, buffer, 0, _writeChunkSize);
+                    bufferPos -= _writeChunkSize;
                 }
             }
         }
@@ -129,73 +120,6 @@ namespace SurronCommunication_Logger
                 }
             }
             return true;
-        }
-
-        private class LogEntry
-        {
-            public LogEntry(DateTime time, ushort address, ArrayList values)
-            {
-                Time = time;
-                Addr = address;
-                Values = values;
-            }
-
-            public DateTime Time { get; }
-            public ushort Addr { get; }
-            public ArrayList Values { get; }
-
-            public override string ToString()
-            {
-                var sb = new StringBuilder();
-                for (int i = 0; i < Values.Count; i++)
-                {
-                    var logEntryValue = (LogEntryValue)Values[i];
-                    if (i != 0)
-                        sb.Append(", ");
-                    sb.Append(logEntryValue.ToString());
-                }
-
-                return $"{Time:s} - {sb}";
-            }
-        }
-
-        private class LogEntryValue
-        {
-            public LogEntryValue(byte parameter, byte[] data)
-            {
-                Param = parameter;
-                Data = new JsonBase64Wrapper(data);
-            }
-
-            public byte Param { get; }
-            public JsonBase64Wrapper Data { get; }
-            public override string ToString()
-            {
-                return $"{Param,3}: {HexUtils.BytesToHex(Data.Data)}";
-            }
-        }
-    }
-
-    internal class JsonBase64Wrapper
-    {
-        public JsonBase64Wrapper(byte[] data)
-        {
-            Data = data;
-        }
-
-        public byte[] Data { get; }
-    }
-
-    internal class JsonBase64WrapperConverter : IConverter
-    {
-        public string ToJson(object value)
-        {
-            return $"\"{Convert.ToBase64String(((JsonBase64Wrapper)value).Data)}\"";
-        }
-
-        public object ToType(object value)
-        {
-            throw new NotSupportedException();
         }
     }
 }

@@ -31,6 +31,9 @@
     <Compile Include="..\SurronCommunication\Parameter\BmsParameters.cs" Link="Parameter\BmsParameters.cs" />
     <Compile Include="..\SurronCommunication\Parameter\EscParameters.cs" Link="Parameter\EscParameters.cs" />
     <Compile Include="..\SurronCommunication\Parameter\ParameterDefinition.cs" Link="Parameter\ParameterDefinition.cs" />
+    <Compile Include="..\SurronCommunication\Parameter\Logging\LogEntry.cs" Link="Parameter\Logging\LogEntry.cs" />
+    <Compile Include="..\SurronCommunication\Parameter\Logging\LogEntryValue.cs" Link="Parameter\Logging\LogEntryValue.cs" />
+    <Compile Include="..\SurronCommunication\Parameter\Logging\LogSerializer.cs" Link="Parameter\Logging\LogSerializer.cs" />
     <Compile Include="InvalidDataException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpanExtensions.cs" />
@@ -41,6 +44,9 @@
     </Reference>
     <Reference Include="nanoFramework.Runtime.Events">
       <HintPath>..\packages\nanoFramework.Runtime.Events.1.11.15\lib\nanoFramework.Runtime.Events.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.System.Collections">
+      <HintPath>..\packages\nanoFramework.System.Collections.1.5.31\lib\nanoFramework.System.Collections.dll</HintPath>
     </Reference>
     <Reference Include="nanoFramework.System.Text">
       <HintPath>..\packages\nanoFramework.System.Text.1.2.54\lib\nanoFramework.System.Text.dll</HintPath>

@@ -1,0 +1,8 @@
+{
+    "profiles": {
+        "SurronCommunication_LogUtil Help": {
+            "commandName": "Project",
+            "commandLineArgs": "--help"
+        }
+    }
+}
