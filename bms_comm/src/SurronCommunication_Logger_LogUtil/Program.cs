@@ -5,10 +5,9 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Numerics;
 using System.Text;
-using System.Text.Json;
 using System.Web;
 
-namespace SurronLogger_Uploader
+namespace SurronCommunication_Logger_LogUtil
 {
     internal class Program
     {

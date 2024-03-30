@@ -23,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03_Examples", "03_Examples"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_EscSimulator", "SurronCommunication_EscSimulator\SurronCommunication_EscSimulator.csproj", "{5CE64D20-D40C-49A8-B07C-BEB8664E766B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronLogger_Uploader", "SurronLogger_Uploader\SurronLogger_Uploader.csproj", "{990F2E64-3CE0-4AD2-8EF4-248D7817113B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_Logger_LogUtil", "SurronCommunication_Logger_LogUtil\SurronCommunication_Logger_LogUtil.csproj", "{990F2E64-3CE0-4AD2-8EF4-248D7817113B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
