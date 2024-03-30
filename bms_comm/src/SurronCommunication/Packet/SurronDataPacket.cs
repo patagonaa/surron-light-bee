@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Buffers.Binary;
-using System.Diagnostics;
 using System.IO;
-#if !NANOFRAMEWORK_1_0
-using SpanByte = System.Span<byte>;
+#if NANOFRAMEWORK_1_0
+using System.Diagnostics;
+using ReadOnlySpanByte = System.SpanByte;
+#else
+using ReadOnlySpanByte = System.ReadOnlySpan<byte>;
 #endif
 
 namespace SurronCommunication.Packet
@@ -36,20 +38,12 @@ namespace SurronCommunication.Packet
             return new SurronDataPacket(command, address, parameter, dataLength, commandData);
         }
 
-        public static SurronDataPacket? FromBytes(SpanByte data)
+        public static SurronDataPacket? FromBytes(ReadOnlySpanByte data)
         {
             if (data.Length < 6)
                 throw new ArgumentException("Message too short (less than 6 bytes)");
 
-            byte calcChecksum = 0;
-            for (int i = 0; i < data.Length - 1; i++)
-            {
-                unchecked
-                {
-                    calcChecksum += data[i];
-                }
-            }
-
+            var calcChecksum = CalcChecksum(data.Slice(0, data.Length - 1));
             var readChecksum = data[data.Length - 1];
 
             if (readChecksum != calcChecksum)
@@ -79,20 +73,25 @@ namespace SurronCommunication.Packet
             if (Command != SurronCmd.ReadRequest)
                 CommandData!.CopyTo(bytes.AsSpan(5, DataLength));
 
+            bytes[bytes.Length - 1] = CalcChecksum(bytes.AsSpan(0, bytes.Length - 1));
+
+            return bytes;
+        }
+
+        private static byte CalcChecksum(ReadOnlySpanByte bytes)
+        {
             byte calcChecksum = 0;
-            for (int i = 0; i < bytes.Length - 1; i++)
+            for (int i = 0; i < bytes.Length; i++)
             {
                 unchecked
                 {
                     calcChecksum += bytes[i];
                 }
             }
-            bytes[bytes.Length - 1] = calcChecksum;
-
-            return bytes;
+            return calcChecksum;
         }
 
-        private static SurronHeader? ReadHeader(SpanByte header)
+        private static SurronHeader? ReadHeader(ReadOnlySpanByte header)
         {
             if (header.Length < HeaderLength)
                 throw new ArgumentException($"Header must be at least {HeaderLength} bytes long");
@@ -119,7 +118,7 @@ namespace SurronCommunication.Packet
 #endif
         }
 
-        public static int GetPacketLengthFromHeader(SpanByte headerBytes)
+        public static int GetPacketLengthFromHeader(ReadOnlySpanByte headerBytes)
         {
             var header = ReadHeader(headerBytes);
             if (header == null)
