@@ -98,13 +98,12 @@ namespace SurronCommunication_Logger
                     changedList.Add(new LogEntryValue(paramId, (byte[])targetArray.Clone()));
                 }
             }
-            if (changedList.Count > 0)
+
+            // enqueue even if there have been no changes to insert data point at timestamp
+            lock (_writeQueue.SyncRoot)
             {
-                lock (_writeQueue.SyncRoot)
-                {
-                    _writeQueue.Enqueue(new LogEntry(updateTime, addr, changedList));
-                    // TODO: prevent queue from growing too large
-                }
+                _writeQueue.Enqueue(new LogEntry(updateTime, logCategory, changedList));
+                // TODO: prevent queue from growing too large
             }
         }
 

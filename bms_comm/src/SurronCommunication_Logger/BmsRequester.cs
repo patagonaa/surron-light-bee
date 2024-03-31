@@ -30,7 +30,7 @@ namespace SurronCommunication_Logger
                 try
                 {
                     var now = DateTime.UtcNow;
-                    var anyUpdated = false;
+                    var anyReceived = false;
                     foreach (var parameterToRead in _parametersToRead)
                     {
                         var paramLength = BmsParameters.GetLength(parameterToRead);
@@ -41,7 +41,7 @@ namespace SurronCommunication_Logger
                         }
                         else
                         {
-                            anyUpdated = true;
+                            anyReceived = true;
                             var currentValue = (byte[])currentValues[(byte)parameterToRead];
 
                             if (currentValue == null)
@@ -55,7 +55,7 @@ namespace SurronCommunication_Logger
                         }
                         Thread.Sleep(10);
                     }
-                    if (anyUpdated)
+                    if (anyReceived)
                         ParameterUpdateEvent?.Invoke(now, BmsParameters.BmsAddress, currentValues);
                 }
                 catch (InvalidDataException ex)

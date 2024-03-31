@@ -74,7 +74,7 @@ namespace SurronCommunication_Logger_LogUtil
                         currentValues[(entry.Addr, entryValue.Param)] = entryValue.Data;
                     }
 
-                    var parsedData = currentValues.SelectMany(x => parser.ParseParameter(x.Key.Addr, x.Key.ParamId, x.Value));
+                    var parsedData = currentValues.Where(x => x.Key.Addr == entry.Addr).SelectMany(x => parser.ParseParameter(x.Key.Addr, x.Key.ParamId, x.Value));
                     foreach (var lineGroup in parsedData.GroupBy(x => (x.Measurement, string.Join(',', x.Labels))))
                     {
                         var groupList = lineGroup.ToList();
