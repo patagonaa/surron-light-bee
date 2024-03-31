@@ -6,10 +6,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Device.Gpio;
 using nanoFramework.Runtime.Native;
-using nanoFramework.System.IO.FileSystem;
-using System.Collections;
-using SurronCommunication;
-using System.Buffers.Binary;
 
 namespace SurronCommunication_Logger
 {

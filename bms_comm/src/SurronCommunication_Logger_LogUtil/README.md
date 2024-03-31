@@ -9,4 +9,7 @@ After also looking up the offset and length of the spiffs partition of your part
 # put ESP32 into boot mode by holding "boot" button while pressing "reset" button
 esptool --port COM15 read_flash 0x490000 0x300000 spiffs.bin
 mkspiffs -u ./out -b 4096 -p 512 ./spiffs.bin
+
+# optional: erase section (caution: this also clears wifi config, etc.)
+esptool erase_region 0x490000 0x300000
 ```

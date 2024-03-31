@@ -16,6 +16,7 @@ namespace SurronCommunication_Logger_LogUtil
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
             var rootCommand = new RootCommand("Surron log file utility");
+
             {
                 var fileArgument = new Argument<string>("file", "The log file to upload") { Arity = ArgumentArity.ExactlyOne };
 
@@ -23,14 +24,14 @@ namespace SurronCommunication_Logger_LogUtil
                     name: "--influxUrl",
                     description: "The InfluxDB URL including credentials (example: 'https://user:password@influxdb.example.com/')")
                 {
-                    IsRequired = true,
+                    IsRequired = true
                 };
 
                 var influxDbOption = new Option<string>(
                     name: "--influxDb",
                     description: "The InfluxDB database name")
                 {
-                    IsRequired = true,
+                    IsRequired = true
                 };
 
                 var uploadCommand = new Command("uploadInflux")
@@ -95,7 +96,11 @@ namespace SurronCommunication_Logger_LogUtil
 
             var uri = new Uri($"{influxUrl.TrimEnd('/')}/write?db={HttpUtility.UrlEncode(influxDb)}");
             var request = new HttpRequestMessage(HttpMethod.Post, uri.GetComponents(UriComponents.AbsoluteUri & ~UriComponents.UserInfo, UriFormat.UriEscaped));
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(uri.GetComponents(UriComponents.UserInfo, UriFormat.Unescaped))));
+            var credentials = uri.GetComponents(UriComponents.UserInfo, UriFormat.Unescaped);
+            if (!string.IsNullOrEmpty(credentials))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials)));
+            }
             request.Content = new ByteArrayContent(ms.ToArray());
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();

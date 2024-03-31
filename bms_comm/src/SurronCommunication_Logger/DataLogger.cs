@@ -52,6 +52,8 @@ namespace SurronCommunication_Logger
                 Thread.Sleep(0);
 
                 //TODO: if entry is longer than writeChunkSize, this may break
+                // if we wrote more than the writeChunkSize (half the buffer), write the first half of the buffer, move the second half to the first half and continue writing where we left off
+                // this is basically a simple ring buffer
                 if (bufferPos >= _writeChunkSize)
                 {
                     WriteToFile(buffer, 0, _writeChunkSize);
