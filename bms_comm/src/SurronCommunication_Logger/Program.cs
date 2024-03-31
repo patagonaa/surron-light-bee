@@ -34,12 +34,17 @@ namespace SurronCommunication_Logger
                 var response = bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)BmsParameters.Parameters.RtcTime, BmsParameters.GetLength(BmsParameters.Parameters.RtcTime), CancellationToken.None);
                 if (response != null)
                 {
-                    var rtcTime = new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]);
-                    Debug.WriteLine($"Got RTC Time: {rtcTime:s}");
-                    var correctedTime = rtcTime + _utcBmsTimeOffset;
-                    Debug.WriteLine($"Correcting to: {correctedTime:s}");
-                    Rtc.SetSystemTime(correctedTime);
-                    break;
+                    Thread.Sleep(1000); // read RTC twice because the value is outdated right after wakeup
+                    response = bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)BmsParameters.Parameters.RtcTime, BmsParameters.GetLength(BmsParameters.Parameters.RtcTime), CancellationToken.None);
+                    if (response != null)
+                    {
+                        var rtcTime = new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]);
+                        Debug.WriteLine($"Got RTC Time: {rtcTime:s}");
+                        var correctedTime = rtcTime + _utcBmsTimeOffset;
+                        Debug.WriteLine($"Correcting to: {correctedTime:s}");
+                        Rtc.SetSystemTime(correctedTime);
+                        break;
+                    }
                 }
                 Thread.Sleep(1000);
             }

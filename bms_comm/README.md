@@ -6,10 +6,16 @@ The BMS seems to have two sleep modes:
 
 - RS485 off
     - happens after around 3 seconds, RS485 termination/pullup/pulldown is turned off and BMS takes some time / a few tries until it responds
-    - can be reenabled via RS485 communication, 60V input or button press, possibly with battery charging/discharging as well
+    - can be reenabled via RS485 communication, 60V input, button press or battery charging
 - standby
     - happens after some minutes/hours
-    - can be reenabled with 60V input or button press, possibly with battery charging/discharging as well (though not via RS485)
+    - can be reenabled with 60V input, button press or battery charging (though not via RS485)
+
+Oddities:
+- When the BMS display is on (60V input, button pressed or charging), the BMS takes pretty long to respond sometimes (normal: ~10ms, when display is on: 80ms, maybe longer), probably while the microcontroller is busy updating the display.
+- When waking the BMS up (even just from the ~3s RS485 timeout), The RTC value is outdated and only changes to the correct value after a second or so.
+
+## Message Structure
 
 All messages seem to have the same structure:
 - Command (`46` = request, `47` = response, `57` = unsolicited)
@@ -28,8 +34,6 @@ Points in case:
 - responses (`47`) stop when battery is detached (requests and unsolicited messages keep on going)
 - unsolicited messages (`57`) contain the data received in the responses with a slight delay
 - unsolicited messages (`57`) contain multiple parameters (like battery percentage, battery voltage, status, etc.), which suggest those messages are aimed at the display.
-
-Be aware: when the BMS display is on (60V input or button pressed), the BMS takes pretty long to respond sometimes (normal: ~10ms, when display is on: 80ms, maybe longer), probably as the microcontroller is busy updating the display.
 
 ## Commands
 ## `46` (Request)
