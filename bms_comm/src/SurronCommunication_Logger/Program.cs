@@ -15,7 +15,7 @@ namespace SurronCommunication_Logger
 {
     public class Program
     {
-        private static readonly TimeSpan _utcBmsTimeOffset = new TimeSpan(8, 20, 44).Negate();
+        private static readonly TimeSpan _utcBmsTimeOffset = new TimeSpan(8, 20, 54).Negate();
 
         public static void Main()
         {

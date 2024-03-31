@@ -40,7 +40,7 @@ namespace SurronCommunication.BatterySimulator
                     BinaryPrimitives.WriteInt32LittleEndian(dataToReturn[BmsParameters.Parameters.BatteryCurrent], r.Next(-90000, 10000));
                     dataToReturn[BmsParameters.Parameters.BatteryPercent][0] = (byte)r.Next(0, 101);
 
-                    var now = DateTime.UtcNow + new TimeSpan(8, 20, 44);
+                    var now = DateTime.UtcNow + new TimeSpan(8, 20, 54);
                     dataToReturn[BmsParameters.Parameters.RtcTime] = [(byte)(now.Year - 2000), (byte)now.Month, (byte)now.Day, (byte)now.Hour, (byte)now.Minute, (byte)now.Second];
 
                     try
