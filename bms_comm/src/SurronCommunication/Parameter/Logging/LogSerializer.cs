@@ -53,40 +53,48 @@ namespace SurronCommunication.Parameter.Logging
                 logEntry = null;
                 return 0;
             }
-
-            var position = 0;
-
-            var time = DateTime.UnixEpoch.AddTicks(BinaryPrimitives.ReadInt64LittleEndian(buffer.Slice(position, 8)));
-            position += 8;
-
-            var addr = BinaryPrimitives.ReadUInt16LittleEndian(buffer.Slice(8, 2));
-            position += 2;
-
-            var valueCount = buffer[position++];
-
-            var values = new LogEntryValue[valueCount];
-
-            for (int i = 0; i < valueCount; i++)
+            try
             {
-                var paramId = buffer[position++];
-                var dataLength = buffer[position++];
-                var data = buffer.Slice(position, dataLength).ToArray();
-                position += dataLength;
+                var position = 0;
 
-                values[i] = new LogEntryValue(paramId, data);
+                var time = DateTime.UnixEpoch.AddTicks(BinaryPrimitives.ReadInt64LittleEndian(buffer.Slice(position, 8)));
+                position += 8;
+
+                var addr = BinaryPrimitives.ReadUInt16LittleEndian(buffer.Slice(8, 2));
+                position += 2;
+
+                var valueCount = buffer[position++];
+
+                var values = new LogEntryValue[valueCount];
+
+                for (int i = 0; i < valueCount; i++)
+                {
+                    var paramId = buffer[position++];
+                    var dataLength = buffer[position++];
+                    var data = buffer.Slice(position, dataLength).ToArray();
+                    position += dataLength;
+
+                    values[i] = new LogEntryValue(paramId, data);
+                }
+
+                var calcChecksum = CalcChecksum(buffer.Slice(0, position));
+                var readChecksum = buffer[position++];
+
+                if (calcChecksum != readChecksum)
+                {
+                    logEntry = null;
+                    return 0;
+                }
+
+                logEntry = new LogEntry(time, category, values);
+                return position;
             }
-
-            var calcChecksum = CalcChecksum(buffer.Slice(0, position));
-            var readChecksum = buffer[position++];
-
-            if (calcChecksum != readChecksum)
+            catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentOutOfRangeException)
             {
+                // buffer data incomplete
                 logEntry = null;
                 return 0;
             }
-
-            logEntry = new LogEntry(time, addr, values);
-            return position;
         }
 
         private static byte CalcChecksum(ReadOnlySpanByte bytes)
