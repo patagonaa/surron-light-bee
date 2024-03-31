@@ -1,5 +1,6 @@
 ﻿using SurronCommunication.Parameter.Logging;
 using System;
+using System.Buffers.Binary;
 using System.Collections;
 using System.Diagnostics;
 using System.IO;
@@ -47,7 +48,7 @@ namespace SurronCommunication_Logger
                     continue;
                 }
 
-                bufferPos += LogSerializer.Serialize(buffer, logEntry);
+                bufferPos += LogSerializer.Serialize(buffer.AsSpan(bufferPos), logEntry);
                 Thread.Sleep(0);
 
                 //TODO: if entry is longer than writeChunkSize, this may break
