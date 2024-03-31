@@ -68,12 +68,12 @@ namespace SurronCommunication_Logger
             Console.WriteLine("Written to file!");
         }
 
-        public void SetData(DateTime updateTime, ushort addr, Hashtable newData)
+        public void SetData(DateTime updateTime, LogCategory logCategory, Hashtable newData)
         {
             var changedList = new ArrayList();
             foreach (byte paramId in newData.Keys)
             {
-                var key = addr << 8 | paramId;
+                var key = ((byte)logCategory) << 8 | paramId;
 
                 var sourceArray = (byte[])newData[paramId];
                 var targetArray = (byte[])_currentValues[key];

@@ -1,6 +1,7 @@
 ﻿using SurronCommunication.Communication;
 using SurronCommunication.Packet;
 using SurronCommunication.Parameter;
+using SurronCommunication.Parameter.Logging;
 using System;
 using System.Collections;
 using System.Diagnostics;
@@ -61,10 +62,10 @@ namespace SurronCommunication_Logger
 
                             if (packet != null &&
                                 packet.Command == SurronCmd.Status &&
-                                packet.Address == 0x183)
+                                packet.Address == EscParameters.EscAddress)
                             {
                                 escStatus[packet.Parameter] = packet.CommandData;
-                                ParameterUpdateEvent?.Invoke(DateTime.UtcNow, packet.Address, escStatus);
+                                ParameterUpdateEvent?.Invoke(DateTime.UtcNow, LogCategory.Esc, escStatus);
                             }
                             continue;
                         }
@@ -79,7 +80,7 @@ namespace SurronCommunication_Logger
             }
         }
 
-        public void SetBmsData(DateTime updateTime, ushort address, Hashtable newData)
+        public void SetBmsData(DateTime updateTime, LogCategory logCategory, Hashtable newData)
         {
             foreach (var readParameter in _escReadParameters)
             {

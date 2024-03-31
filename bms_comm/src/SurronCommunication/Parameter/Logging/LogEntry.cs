@@ -11,15 +11,15 @@ namespace SurronCommunication.Parameter.Logging
 {
     public class LogEntry
     {
-        public LogEntry(DateTime time, ushort addr, LogEntryValueList values)
+        public LogEntry(DateTime time, LogCategory category, LogEntryValueList values)
         {
             Time = time;
-            Addr = addr;
+            Category = category;
             Values = values;
         }
 
         public DateTime Time { get; }
-        public ushort Addr { get; }
+        public LogCategory Category { get; }
         public LogEntryValueList Values { get; }
 
         public override string ToString()

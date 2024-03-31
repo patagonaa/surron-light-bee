@@ -6,9 +6,9 @@
         {
             new SpanByte(bytes).CopyTo(span);
         }
-        public static SpanByte AsSpan(this byte[] bytes, int index, int count)
+        public static SpanByte AsSpan(this byte[] bytes, int index, int count = -1)
         {
-            return new SpanByte(bytes, index, count);
+            return new SpanByte(bytes, index, count == -1 ? bytes.Length - index : count);
         }
     }
 }

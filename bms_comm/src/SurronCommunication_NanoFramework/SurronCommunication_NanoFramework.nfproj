@@ -31,6 +31,7 @@
     <Compile Include="..\SurronCommunication\Parameter\BmsParameters.cs" Link="Parameter\BmsParameters.cs" />
     <Compile Include="..\SurronCommunication\Parameter\EscParameters.cs" Link="Parameter\EscParameters.cs" />
     <Compile Include="..\SurronCommunication\Parameter\ParameterDefinition.cs" Link="Parameter\ParameterDefinition.cs" />
+    <Compile Include="..\SurronCommunication\Parameter\Logging\LogCategory.cs" Link="Parameter\Logging\LogCategory.cs" />
     <Compile Include="..\SurronCommunication\Parameter\Logging\LogEntry.cs" Link="Parameter\Logging\LogEntry.cs" />
     <Compile Include="..\SurronCommunication\Parameter\Logging\LogEntryValue.cs" Link="Parameter\Logging\LogEntryValue.cs" />
     <Compile Include="..\SurronCommunication\Parameter\Logging\LogSerializer.cs" Link="Parameter\Logging\LogSerializer.cs" />

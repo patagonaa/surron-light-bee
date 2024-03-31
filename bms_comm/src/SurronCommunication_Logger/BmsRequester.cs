@@ -1,9 +1,8 @@
 ﻿using SurronCommunication.Communication;
 using SurronCommunication.Parameter;
+using SurronCommunication.Parameter.Logging;
 using System;
 using System.Collections;
-using System.Diagnostics;
-using System.IO;
 using System.Threading;
 
 namespace SurronCommunication_Logger
@@ -11,60 +10,84 @@ namespace SurronCommunication_Logger
     internal class BmsRequester
     {
         private readonly ISurronCommunicationHandler _bmsCommunicationHandler;
-        private readonly BmsParameters.Parameters[] _parametersToRead;
+        private readonly BmsParameters.Parameters[] _parametersSlow;
+        private readonly BmsParameters.Parameters[] _parametersFast;
+        private readonly Hashtable _currentValuesSlow;
+        private readonly Hashtable _currentValuesFast;
 
         public event ParameterUpdateEventHandler? ParameterUpdateEvent;
 
-        public BmsRequester(ISurronCommunicationHandler bmsCommunicationHandler, BmsParameters.Parameters[] parametersToRead)
+        public BmsRequester(ISurronCommunicationHandler bmsCommunicationHandler, BmsParameters.Parameters[] parametersSlow, BmsParameters.Parameters[] parametersFast)
         {
             _bmsCommunicationHandler = bmsCommunicationHandler;
-            _parametersToRead = parametersToRead;
+            _parametersSlow = parametersSlow;
+            _parametersFast = parametersFast;
+
+            _currentValuesSlow = new Hashtable(_parametersSlow.Length);
+            _currentValuesFast = new Hashtable(_parametersFast.Length);
         }
 
         public void Run()
         {
-            var currentValues = new Hashtable(_parametersToRead.Length);
-
+            var nextSlowUpdate = DateTime.MinValue;
+            var slowInterval = TimeSpan.FromSeconds(1);
             while (true)
             {
-                try
+                var now = DateTime.UtcNow;
+                ReadAndPublish(now, true);
+                if (now > nextSlowUpdate)
                 {
-                    var now = DateTime.UtcNow;
-                    var anyReceived = false;
-                    foreach (var parameterToRead in _parametersToRead)
-                    {
-                        var paramLength = BmsParameters.GetLength(parameterToRead);
-                        var receivedData = _bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)parameterToRead, paramLength, CancellationToken.None);
-                        if (receivedData == null)
-                        {
-                            Console.WriteLine($"BMS read error");
-                        }
-                        else
-                        {
-                            anyReceived = true;
-                            var currentValue = (byte[])currentValues[(byte)parameterToRead];
-
-                            if (currentValue == null)
-                            {
-                                currentValues[(byte)parameterToRead] = receivedData;
-                            }
-                            else
-                            {
-                                Array.Copy(receivedData, currentValue, paramLength);
-                            }
-                        }
-                        Thread.Sleep(10);
-                    }
-                    if (anyReceived)
-                        ParameterUpdateEvent?.Invoke(now, BmsParameters.BmsAddress, currentValues);
+                    ReadAndPublish(now, false);
+                    nextSlowUpdate = now + slowInterval;
                 }
-                catch (InvalidDataException ex)
-                {
-                    Debug.WriteLine($"Invalid: {ex.Message}");
-                }
-
-                Thread.Sleep(100);
             }
+        }
+
+        private void ReadAndPublish(DateTime now, bool fast)
+        {
+            Hashtable currentValues;
+            BmsParameters.Parameters[] parametersToRead;
+            LogCategory logCategory;
+
+            if (fast)
+            {
+                currentValues = _currentValuesFast;
+                parametersToRead = _parametersFast;
+                logCategory = LogCategory.BmsFast;
+            }
+            else
+            {
+                currentValues = _currentValuesSlow;
+                parametersToRead = _parametersSlow;
+                logCategory = LogCategory.BmsSlow;
+            }
+
+            var anyReceived = false;
+            foreach (var parameterToRead in parametersToRead)
+            {
+                var paramLength = BmsParameters.GetLength(parameterToRead);
+                var receivedData = _bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)parameterToRead, paramLength, CancellationToken.None);
+                if (receivedData == null)
+                {
+                    Console.WriteLine($"BMS read error");
+                }
+                else
+                {
+                    anyReceived = true;
+                    var currentValue = (byte[])currentValues[(byte)parameterToRead];
+
+                    if (currentValue == null)
+                    {
+                        currentValues[(byte)parameterToRead] = receivedData;
+                    }
+                    else
+                    {
+                        Array.Copy(receivedData, currentValue, paramLength);
+                    }
+                }
+            }
+            if (anyReceived)
+                ParameterUpdateEvent?.Invoke(now, logCategory, currentValues);
         }
     }
 }

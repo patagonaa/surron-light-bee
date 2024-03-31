@@ -1,7 +1,8 @@
-﻿using System;
+﻿using SurronCommunication.Parameter.Logging;
+using System;
 using System.Collections;
 
 namespace SurronCommunication_Logger
 {
-    public delegate void ParameterUpdateEventHandler(DateTime updateTime, ushort addr, Hashtable newData);
+    public delegate void ParameterUpdateEventHandler(DateTime updateTime, LogCategory logCategory, Hashtable newData);
 }

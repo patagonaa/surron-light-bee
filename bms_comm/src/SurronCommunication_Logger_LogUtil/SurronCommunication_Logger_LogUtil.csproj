@@ -15,10 +15,4 @@
     <ProjectReference Include="..\SurronCommunication\SurronCommunication.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="ExampleData\log_2024-03-28_21-23-37.bin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

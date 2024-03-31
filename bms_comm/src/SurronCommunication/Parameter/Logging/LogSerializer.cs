@@ -18,8 +18,7 @@ namespace SurronCommunication.Parameter.Logging
             BinaryPrimitives.WriteInt64LittleEndian(buffer.Slice(position, 8), (logEntry.Time - DateTime.UnixEpoch).Ticks);
             position += 8;
 
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer.Slice(position, 2), logEntry.Addr);
-            position += 2;
+            buffer[position++] = (byte)logEntry.Category;
 
             if (logEntry.Values.Count > 255)
                 throw new ArgumentException("must not have more than 255 values!", nameof(logEntry));
@@ -48,7 +47,7 @@ namespace SurronCommunication.Parameter.Logging
 
         public static int Deserialize(ReadOnlySpanByte buffer, out LogEntry? logEntry)
         {
-            if(buffer.Length == 0)
+            if (buffer.Length == 0)
             {
                 logEntry = null;
                 return 0;
@@ -60,8 +59,7 @@ namespace SurronCommunication.Parameter.Logging
                 var time = DateTime.UnixEpoch.AddTicks(BinaryPrimitives.ReadInt64LittleEndian(buffer.Slice(position, 8)));
                 position += 8;
 
-                var addr = BinaryPrimitives.ReadUInt16LittleEndian(buffer.Slice(8, 2));
-                position += 2;
+                var category = (LogCategory)buffer[position++];
 
                 var valueCount = buffer[position++];
 

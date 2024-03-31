@@ -57,7 +57,7 @@ namespace SurronCommunication_Logger_LogUtil
             while (true)
             {
                 position += LogSerializer.Deserialize(bytes.AsSpan(position), out var logEntry);
-                if(logEntry == null)
+                if (logEntry == null)
                     break;
                 entries.Add(logEntry);
             }
@@ -66,15 +66,23 @@ namespace SurronCommunication_Logger_LogUtil
             using var ms = new MemoryStream();
             using (var lineProtocolSw = new StreamWriter(ms, Encoding.UTF8, leaveOpen: true) { NewLine = "\n" })
             {
-                var currentValues = new Dictionary<(ushort Addr, byte ParamId), byte[]>();
+                var currentValues = new Dictionary<(LogCategory Category, byte ParamId), byte[]>();
                 foreach (var entry in entries)
                 {
                     foreach (var entryValue in entry.Values)
                     {
-                        currentValues[(entry.Addr, entryValue.Param)] = entryValue.Data;
+                        currentValues[(entry.Category, entryValue.Param)] = entryValue.Data;
                     }
 
-                    var parsedData = currentValues.Where(x => x.Key.Addr == entry.Addr).SelectMany(x => parser.ParseParameter(x.Key.Addr, x.Key.ParamId, x.Value));
+                    var parameterType = entry.Category switch
+                    {
+                        LogCategory.BmsFast => ParameterType.Bms,
+                        LogCategory.BmsSlow => ParameterType.Bms,
+                        LogCategory.Esc => ParameterType.Esc,
+                        _ => throw new NotSupportedException(),
+                    };
+
+                    var parsedData = currentValues.Where(x => x.Key.Category == entry.Category).SelectMany(x => parser.ParseParameter(parameterType, x.Key.ParamId, x.Value));
                     foreach (var lineGroup in parsedData.GroupBy(x => (x.Measurement, string.Join(',', x.Labels))))
                     {
                         var groupList = lineGroup.ToList();

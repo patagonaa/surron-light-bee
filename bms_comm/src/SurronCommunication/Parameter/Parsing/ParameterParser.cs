@@ -3,13 +3,13 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SurronCommunication.Parameter
+namespace SurronCommunication.Parameter.Parsing
 {
     public class ParameterParser
     {
-        public IEnumerable<DataPoint> ParseParameter(ushort address, byte parameter, byte[] data)
+        public IEnumerable<DataPoint> ParseParameter(ParameterType parameterType, byte parameter, byte[] data)
         {
-            if (address == BmsParameters.BmsAddress)
+            if (parameterType == ParameterType.Bms)
             {
                 switch ((BmsParameters.Parameters)parameter)
                 {
@@ -113,7 +113,7 @@ namespace SurronCommunication.Parameter
                         break;
                 }
             }
-            else if (address == EscParameters.EscAddress)
+            else if (parameterType == ParameterType.Esc)
             {
                 switch ((EscParameters.Parameters)parameter)
                 {
@@ -126,7 +126,7 @@ namespace SurronCommunication.Parameter
             }
             else
             {
-                throw new ArgumentException("Invalid address", nameof(address));
+                throw new ArgumentException($"Invalid parameterType {parameter}", nameof(parameter));
             }
         }
 
