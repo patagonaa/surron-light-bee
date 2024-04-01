@@ -136,21 +136,4 @@ namespace SurronCommunication.Parameter.Parsing
             return Encoding.ASCII.GetString(bytes.Slice(0, nulIdx > -1 ? nulIdx : bytes.Length));
         }
     }
-    public class DataPoint
-    {
-        public DataPoint(string measurement, Dictionary<string, string> labels, string fieldName, object value, string? unit = null)
-        {
-            Measurement = measurement;
-            Labels = labels;
-            FieldName = fieldName;
-            Value = value;
-            Unit = unit;
-        }
-
-        public string Measurement { get; }
-        public Dictionary<string, string> Labels { get; }
-        public string FieldName { get; }
-        public object Value { get; }
-        public string? Unit { get; }
-    }
 }

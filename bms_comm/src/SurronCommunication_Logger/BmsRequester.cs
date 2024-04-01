@@ -29,17 +29,30 @@ namespace SurronCommunication_Logger
 
         public void Run()
         {
-            var nextSlowUpdate = DateTime.MinValue;
-            var slowInterval = TimeSpan.FromSeconds(1);
+            var fastInterval = TimeSpan.FromSeconds(1);
+            var slowDivider = 5;
+
+            int updateCount = 0;
+            var nextFastUpdate = DateTime.MinValue;
             while (true)
             {
                 var now = DateTime.UtcNow;
+                var sleepTime = nextFastUpdate - now;
+                if (sleepTime > TimeSpan.Zero)
+                {
+                    Thread.Sleep(sleepTime);
+                    now += sleepTime;
+                }
+
                 ReadAndPublish(now, true);
-                if (now > nextSlowUpdate)
+
+                if (updateCount % slowDivider == 0)
                 {
                     ReadAndPublish(now, false);
-                    nextSlowUpdate = now + slowInterval;
                 }
+
+                nextFastUpdate = now + fastInterval;
+                updateCount++;
             }
         }
 

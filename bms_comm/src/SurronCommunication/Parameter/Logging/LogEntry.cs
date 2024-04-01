@@ -33,7 +33,7 @@ namespace SurronCommunication.Parameter.Logging
                 sb.Append(logEntryValue.ToString());
             }
 
-            return $"{Time:s} - {sb}";
+            return $"{Time:yyyy'-'MM'-'dd'T'HH'-'mm'-'ss.fff'Z'} - {Category} - {sb}";
         }
     }
 }

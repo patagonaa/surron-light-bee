@@ -33,6 +33,7 @@ namespace SurronCommunication_Logger
         {
             var buffer = new byte[_writeChunkSize * 2];
             var bufferPos = 0;
+            var pendingLogEntries = 0;
 
             while (true)
             {
@@ -49,6 +50,7 @@ namespace SurronCommunication_Logger
                 }
 
                 bufferPos += LogSerializer.Serialize(buffer.AsSpan(bufferPos), logEntry);
+                pendingLogEntries++;
                 Thread.Sleep(0);
 
                 //TODO: if entry is longer than writeChunkSize, this may break
@@ -57,6 +59,8 @@ namespace SurronCommunication_Logger
                 if (bufferPos >= _writeChunkSize)
                 {
                     WriteToFile(buffer, 0, _writeChunkSize);
+                    Console.WriteLine($"Written {pendingLogEntries} log entries to file!");
+                    pendingLogEntries = 0;
                     Thread.Sleep(0);
                     Array.Copy(buffer, _writeChunkSize, buffer, 0, _writeChunkSize);
                     bufferPos -= _writeChunkSize;
@@ -67,7 +71,6 @@ namespace SurronCommunication_Logger
         private void WriteToFile(byte[] buffer, int offset, int length)
         {
             _file.Write(buffer, offset, length);
-            Console.WriteLine("Written to file!");
         }
 
         public void SetData(DateTime updateTime, LogCategory logCategory, Hashtable newData)

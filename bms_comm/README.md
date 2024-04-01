@@ -14,6 +14,7 @@ The BMS seems to have two sleep modes:
 Oddities:
 - When the BMS display is on (60V input, button pressed or charging), the BMS takes pretty long to respond sometimes (normal: ~10ms, when display is on: 80ms, maybe longer), probably while the microcontroller is busy updating the display.
 - When waking the BMS up (even just from the ~3s RS485 timeout), The RTC value is outdated and only changes to the correct value after a second or so.
+- BMS only seems to update its internal values every second or so, polling more often than that works, but does not really do anything.
 
 ## Message Structure
 
