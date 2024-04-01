@@ -1,6 +1,7 @@
-﻿using SurronCommunication.Parameter;
-using SurronCommunication.Parameter.Logging;
+﻿using SurronCommunication.Parameter.Logging;
+using SurronCommunication.Parameter.Parsing;
 using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Numerics;
@@ -41,7 +42,7 @@ namespace SurronCommunication_Logger_LogUtil
                     fileArgument,
                 };
 
-                uploadCommand.SetHandler((url, db, file) => Upload(file, url, db), influxUrlOption, influxDbOption, fileArgument);
+                uploadCommand.SetHandler((url, db, file) => RunInfluxUpload(file, url, db), influxUrlOption, influxDbOption, fileArgument);
 
                 rootCommand.AddCommand(uploadCommand);
             }
@@ -49,61 +50,102 @@ namespace SurronCommunication_Logger_LogUtil
             await rootCommand.InvokeAsync(args);
         }
 
-        private static async Task Upload(string file, string influxUrl, string influxDb)
+        private static async Task RunInfluxUpload(string file, string influxUrl, string influxDb)
         {
-            var bytes = File.ReadAllBytes(file); // TODO use a stream here for RAM/performance reasons
+            using var bytes = File.OpenRead(file);
 
-            var entries = new List<LogEntry>();
-            var position = 0;
-            while (true)
-            {
-                position += LogSerializer.Deserialize(bytes.AsSpan(position), out var logEntry);
-                if (logEntry == null)
-                    break;
-                entries.Add(logEntry);
-            }
+            var entries = ParseEntries(bytes);
+            var lines = ConvertToInfluxLines(entries);
 
-            var parser = new ParameterParser();
-            using var ms = new MemoryStream();
-            using (var lineProtocolSw = new StreamWriter(ms, Encoding.UTF8, leaveOpen: true) { NewLine = "\n" })
-            {
-                var currentValues = new Dictionary<(LogCategory Category, byte ParamId), byte[]>();
-                foreach (var entry in entries)
-                {
-                    foreach (var entryValue in entry.Values)
-                    {
-                        currentValues[(entry.Category, entryValue.Param)] = entryValue.Data;
-                    }
-
-                    var parameterType = entry.Category switch
-                    {
-                        LogCategory.BmsFast => ParameterType.Bms,
-                        LogCategory.BmsSlow => ParameterType.Bms,
-                        LogCategory.Esc => ParameterType.Esc,
-                        _ => throw new NotSupportedException(),
-                    };
-
-                    var parsedData = currentValues.Where(x => x.Key.Category == entry.Category).SelectMany(x => parser.ParseParameter(parameterType, x.Key.ParamId, x.Value));
-                    foreach (var lineGroup in parsedData.GroupBy(x => (x.Measurement, string.Join(',', x.Labels))))
-                    {
-                        var groupList = lineGroup.ToList();
-                        lineProtocolSw.WriteLine(GetInfluxLine(lineGroup.Key.Measurement, groupList[0].Labels, groupList.Select(x => (x.FieldName, x.Value)), entry.Time));
-                    }
-                }
-            }
 
             var client = new HttpClient();
 
-            var uri = new Uri($"{influxUrl.TrimEnd('/')}/write?db={HttpUtility.UrlEncode(influxDb)}");
-            var request = new HttpRequestMessage(HttpMethod.Post, uri.GetComponents(UriComponents.AbsoluteUri & ~UriComponents.UserInfo, UriFormat.UriEscaped));
-            var credentials = uri.GetComponents(UriComponents.UserInfo, UriFormat.Unescaped);
+            var fullUri = new Uri($"{influxUrl.TrimEnd('/')}/write?db={HttpUtility.UrlEncode(influxDb)}");
+
+            var requestUri = fullUri.GetComponents(UriComponents.AbsoluteUri & ~UriComponents.UserInfo, UriFormat.UriEscaped);
+
+            var credentials = fullUri.GetComponents(UriComponents.UserInfo, UriFormat.Unescaped);
             if (!string.IsNullOrEmpty(credentials))
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials)));
+
+            foreach (var lineBatch in lines.Chunk(5000))
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials)));
+                using var ms = new MemoryStream();
+                using (var lineProtocolSw = new StreamWriter(ms, Encoding.UTF8, leaveOpen: true) { NewLine = "\n" })
+                {
+                    foreach (var line in lineBatch)
+                    {
+                        lineProtocolSw.WriteLine(line);
+                    }
+                }
+
+                var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new ByteArrayContent(ms.ToArray())
+                };
+                var response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
             }
-            request.Content = new ByteArrayContent(ms.ToArray());
-            var response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
+        }
+
+        private static IEnumerable<LogEntry> ParseEntries(Stream logFile)
+        {
+            // this always reads one bufferLength of bytes, reads a single log entry,
+            // then resets the stream position to the beginning of the next log entry, then repeats (until the end of the file).
+            //
+            // this is pretty inefficient (because of constant rewinding and reading of the stream) but is a lot simpler than having to deal
+            // with entries at the end of the buffer.
+
+            var bufferLength = 256;
+            byte[] buffer = new byte[bufferLength];
+            var position = 0;
+            while (true)
+            {
+                logFile.Position = position;
+                var bufferPosition = 0;
+                while (bufferPosition < bufferLength)
+                {
+                    int readBytes = logFile.Read(buffer, bufferPosition, bufferLength-bufferPosition);
+                    if (readBytes == 0)
+                        break;
+                    bufferPosition += readBytes;
+                }
+
+                var handledLength = LogSerializer.Deserialize(buffer.AsSpan(0, bufferPosition), out var logEntry);
+                if (handledLength == 0 || logEntry == null)
+                    break;
+                yield return logEntry;
+                position += handledLength;
+            }
+        }
+
+        private static IEnumerable<string> ConvertToInfluxLines(IEnumerable<LogEntry> entries)
+        {
+            var parser = new ParameterParser();
+
+            var currentValues = new Dictionary<(LogCategory Category, byte ParamId), byte[]>();
+            foreach (var entry in entries)
+            {
+                foreach (var entryValue in entry.Values)
+                {
+                    currentValues[(entry.Category, entryValue.Param)] = entryValue.Data;
+                }
+
+                var parameterType = entry.Category switch
+                {
+                    LogCategory.BmsFast => ParameterType.Bms,
+                    LogCategory.BmsSlow => ParameterType.Bms,
+                    LogCategory.Esc => ParameterType.Esc,
+                    _ => throw new NotSupportedException(),
+                };
+
+                var parsedData = currentValues.Where(x => x.Key.Category == entry.Category).SelectMany(x => parser.ParseParameter(parameterType, x.Key.ParamId, x.Value));
+                foreach (var lineGroup in parsedData.GroupBy(x => (x.Measurement, string.Join(',', x.Labels))))
+                {
+                    var groupList = lineGroup.ToList();
+                    yield return GetInfluxLine(lineGroup.Key.Measurement, groupList[0].Labels, groupList.Select(x => (x.FieldName, x.Value)), entry.Time);
+                }
+            }
         }
 
         private static string GetInfluxLine(string measurement, Dictionary<string, string> labels, IEnumerable<(string FieldName, object Value)> values, DateTime time)
