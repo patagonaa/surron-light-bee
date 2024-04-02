@@ -27,14 +27,14 @@ namespace SurronCommunication_Logger
             _currentValuesFast = new Hashtable(_parametersFast.Length);
         }
 
-        public void Run()
+        public void Run(CancellationToken token)
         {
             var fastInterval = TimeSpan.FromSeconds(1);
             var slowDivider = 5;
 
             int updateCount = 0;
             var nextFastUpdate = DateTime.MinValue;
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 var now = DateTime.UtcNow;
                 var sleepTime = nextFastUpdate - now;

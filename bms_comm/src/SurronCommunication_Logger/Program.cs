@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Device.Gpio;
 using nanoFramework.Runtime.Native;
+using Iot.Device.Ws28xx.Esp32;
 
 namespace SurronCommunication_Logger
 {
@@ -15,11 +16,28 @@ namespace SurronCommunication_Logger
 
         public static void Main()
         {
+            var gpioController = new GpioController();
+
+            var cts = new CancellationTokenSource();
+
+            var button = gpioController.OpenPin(0, PinMode.InputPullUp);
+            button.DebounceTimeout = TimeSpan.FromMilliseconds(100);
+            button.ValueChanged += (o, e) =>
+            {
+                if (e.ChangeType == PinEventTypes.Falling)
+                    cts.Cancel();
+            };
+
+            Ws28xx debugLed = new Ws2808(38, 1);
+
+            debugLed.Image.SetPixel(0, 0, 10, 0, 0);
+            debugLed.Update();
+
             Configuration.SetPinFunction(Gpio.IO16, DeviceFunction.COM2_RX);
             Configuration.SetPinFunction(Gpio.IO17, DeviceFunction.COM2_TX);
 
-            Configuration.SetPinFunction(Gpio.IO18, DeviceFunction.COM3_RX);
-            Configuration.SetPinFunction(Gpio.IO19, DeviceFunction.COM3_TX);
+            Configuration.SetPinFunction(Gpio.IO06, DeviceFunction.COM3_RX);
+            Configuration.SetPinFunction(Gpio.IO07, DeviceFunction.COM3_TX);
 
             var bmsCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM3", "BMS");
             var escCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM2", "ESC");
@@ -74,7 +92,7 @@ namespace SurronCommunication_Logger
 
             var bmsRequester = new BmsRequester(bmsCommunicationHandler, parametersSlow, parametersFast);
 
-            var bmsReadThread = new Thread(() => bmsRequester.Run());
+            var bmsReadThread = new Thread(() => bmsRequester.Run(cts.Token));
             bmsReadThread.Start();
 
             // ESC request responder
@@ -88,7 +106,7 @@ namespace SurronCommunication_Logger
             };
             var escResponder = new EscResponder(escCommunicationHandler, escReadParameters);
             bmsRequester.ParameterUpdateEvent += escResponder.SetBmsData;
-            var escRespondThread = new Thread(() => escResponder.Run());
+            var escRespondThread = new Thread(() => escResponder.Run(cts.Token));
             escRespondThread.Start();
 
             // Logger
@@ -113,12 +131,27 @@ namespace SurronCommunication_Logger
             //        Thread.Sleep(1000);
             //    }
             //}
-            
-            var dataLogger = new DataLogger($"I:\\log_{DateTime.UtcNow:yyyy'-'MM'-'dd'_'HH'-'mm'-'ss}.ndjson");
+
+            var dataLogger = new DataLogger($"I:\\log_{DateTime.UtcNow:yyyy'-'MM'-'dd'_'HH'-'mm'-'ss}.bin");
             bmsRequester.ParameterUpdateEvent += dataLogger.SetData;
             escResponder.ParameterUpdateEvent += dataLogger.SetData;
-            var dataLoggerThread = new Thread(() => dataLogger.Run());
+            var dataLoggerThread = new Thread(() => dataLogger.Run(cts.Token));
             dataLoggerThread.Start();
+
+            debugLed.Image.SetPixel(0, 0, 0, 10, 0);
+            debugLed.Update();
+
+            cts.Token.WaitHandle.WaitOne();
+
+            debugLed.Image.SetPixel(0, 0, 0, 0, 10);
+            debugLed.Update();
+
+            bmsReadThread.Join();
+            escRespondThread.Join();
+            dataLoggerThread.Join();
+
+            debugLed.Image.SetPixel(0, 0, 10, 0, 0);
+            debugLed.Update();
 
             Thread.Sleep(Timeout.Infinite);
         }

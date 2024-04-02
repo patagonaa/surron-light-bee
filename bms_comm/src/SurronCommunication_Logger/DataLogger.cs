@@ -16,26 +16,27 @@ namespace SurronCommunication_Logger
 
         private readonly Hashtable _currentValues = new(10);
         private readonly Queue _writeQueue = new();
-        private readonly FileStream _file;
+        private readonly string _path;
+
+        private FileStream? _file;
 
         public DataLogger(string path)
         {
-            var files = Directory.GetFiles("I:");
+            _path = path;
+            //var files = Directory.GetFiles("I:");
             //foreach (var file in files)
             //{
             //    File.Delete(file);
             //}
-
-            _file = File.OpenWrite(path);
         }
 
-        public void Run()
+        public void Run(CancellationToken token)
         {
             var buffer = new byte[_writeChunkSize * 2];
             var bufferPos = 0;
             var pendingLogEntries = 0;
 
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 LogEntry? logEntry = null;
                 lock (_writeQueue.SyncRoot)
@@ -66,10 +67,18 @@ namespace SurronCommunication_Logger
                     bufferPos -= _writeChunkSize;
                 }
             }
+
+            if (bufferPos > 0)
+            {
+                WriteToFile(buffer, 0, bufferPos);
+            }
+
+            _file?.Dispose();
         }
 
         private void WriteToFile(byte[] buffer, int offset, int length)
         {
+            _file ??= File.OpenWrite(_path);
             _file.Write(buffer, offset, length);
         }
 
