@@ -1,4 +1,4 @@
-﻿namespace SurronCommunication.Parameter.Logging
+﻿namespace SurronCommunication_Logging.Logging
 {
     public enum LogCategory : byte
     {

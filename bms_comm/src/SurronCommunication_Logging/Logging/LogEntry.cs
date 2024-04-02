@@ -4,10 +4,10 @@ using System.Text;
 #if NANOFRAMEWORK_1_0
 using LogEntryValueList = System.Collections.IList;
 #else
-using LogEntryValueList = System.Collections.Generic.IList<SurronCommunication.Parameter.Logging.LogEntryValue>;
+using LogEntryValueList = System.Collections.Generic.IList<SurronCommunication_Logging.Logging.LogEntryValue>;
 #endif
 
-namespace SurronCommunication.Parameter.Logging
+namespace SurronCommunication_Logging.Logging
 {
     public class LogEntry
     {

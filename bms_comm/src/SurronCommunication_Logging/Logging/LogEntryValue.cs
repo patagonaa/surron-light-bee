@@ -1,4 +1,6 @@
-﻿namespace SurronCommunication.Parameter.Logging
+﻿using SurronCommunication;
+
+namespace SurronCommunication_Logging.Logging
 {
     public class LogEntryValue
     {

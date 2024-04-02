@@ -1,7 +1,7 @@
 ﻿using SurronCommunication.Communication;
 using SurronCommunication.Packet;
 using SurronCommunication.Parameter;
-using SurronCommunication.Parameter.Logging;
+using SurronCommunication_Logging.Logging;
 using System;
 using System.Collections;
 using System.Diagnostics;

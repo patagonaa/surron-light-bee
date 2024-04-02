@@ -1,6 +1,6 @@
 ﻿using SurronCommunication.Communication;
 using SurronCommunication.Parameter;
-using SurronCommunication.Parameter.Logging;
+using SurronCommunication_Logging.Logging;
 using System;
 using System.Collections;
 using System.Threading;

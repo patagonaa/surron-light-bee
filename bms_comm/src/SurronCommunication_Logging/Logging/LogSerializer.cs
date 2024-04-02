@@ -7,7 +7,7 @@ using ReadOnlySpanByte = System.ReadOnlySpan<byte>;
 using SpanByte = System.Span<byte>;
 #endif
 
-namespace SurronCommunication.Parameter.Logging
+namespace SurronCommunication_Logging.Logging
 {
     public static class LogSerializer
     {

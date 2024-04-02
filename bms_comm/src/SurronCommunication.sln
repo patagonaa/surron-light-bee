@@ -25,6 +25,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_EscSimu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_Logger_LogUtil", "SurronCommunication_Logger_LogUtil\SurronCommunication_Logger_LogUtil.csproj", "{990F2E64-3CE0-4AD2-8EF4-248D7817113B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurronCommunication_Logging", "SurronCommunication_Logging\SurronCommunication_Logging.csproj", "{EA6DDBDC-00F2-4947-A999-2839BF3F67F3}"
+EndProject
+Project("{11A8DD76-328B-46DF-9F39-F559912D0360}") = "SurronCommunication_Logging_NanoFramework", "SurronCommunication_Logging_NanoFramework\SurronCommunication_Logging_NanoFramework.nfproj", "{B584751D-2781-42C3-BB00-A30F8F4DEACD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +71,16 @@ Global
 		{990F2E64-3CE0-4AD2-8EF4-248D7817113B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{990F2E64-3CE0-4AD2-8EF4-248D7817113B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{990F2E64-3CE0-4AD2-8EF4-248D7817113B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA6DDBDC-00F2-4947-A999-2839BF3F67F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA6DDBDC-00F2-4947-A999-2839BF3F67F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA6DDBDC-00F2-4947-A999-2839BF3F67F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA6DDBDC-00F2-4947-A999-2839BF3F67F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,6 +94,8 @@ Global
 		{020FEAD7-88CA-4BED-9659-E19F5012875F} = {F4970D7A-1FA3-446C-B67A-4CB607E360B9}
 		{5CE64D20-D40C-49A8-B07C-BEB8664E766B} = {F4970D7A-1FA3-446C-B67A-4CB607E360B9}
 		{990F2E64-3CE0-4AD2-8EF4-248D7817113B} = {F4970D7A-1FA3-446C-B67A-4CB607E360B9}
+		{EA6DDBDC-00F2-4947-A999-2839BF3F67F3} = {A339D36F-5EAB-4094-81D0-A66D56A89688}
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD} = {A339D36F-5EAB-4094-81D0-A66D56A89688}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E39BA94C-E298-4607-9D1F-769AB6EA764A}

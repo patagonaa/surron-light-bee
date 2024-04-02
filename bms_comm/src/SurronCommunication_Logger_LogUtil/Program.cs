@@ -1,5 +1,5 @@
-﻿using SurronCommunication.Parameter.Logging;
-using SurronCommunication.Parameter.Parsing;
+﻿using SurronCommunication.Parameter.Parsing;
+using SurronCommunication_Logging.Logging;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Globalization;
