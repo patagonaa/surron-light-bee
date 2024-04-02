@@ -13,15 +13,15 @@ namespace SurronCommunication_EscSimulator
 
             var token = cts.Token;
 
-            using var communicationHandler = SurronCommunicationHandler.FromSerialPort("COM11");
+            using var communicationHandler = SurronCommunicationHandler.FromSerialPort("COM8");
 
-            var parametersToRead = new List<BmsParameters.Parameters>
+            var parametersToRead = new List<BmsParameterId>
             {
-                BmsParameters.Parameters.Unknown_7,
-                BmsParameters.Parameters.Temperatures,
-                BmsParameters.Parameters.BatteryVoltage,
-                BmsParameters.Parameters.BatteryPercent,
-                BmsParameters.Parameters.BmsStatus,
+                BmsParameterId.Unknown_7,
+                BmsParameterId.Temperatures,
+                BmsParameterId.BatteryVoltage,
+                BmsParameterId.BatteryPercent,
+                BmsParameterId.BmsStatus,
             };
 
             try

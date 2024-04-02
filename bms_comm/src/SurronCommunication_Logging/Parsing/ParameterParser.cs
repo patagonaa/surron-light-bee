@@ -11,9 +11,9 @@ namespace SurronCommunication.Parameter.Parsing
         {
             if (parameterType == ParameterType.Bms)
             {
-                switch ((BmsParameters.Parameters)parameter)
+                switch ((BmsParameterId)parameter)
                 {
-                    case BmsParameters.Parameters.Temperatures:
+                    case BmsParameterId.Temperatures:
                         yield return new DataPoint("temperature", new Dictionary<string, string> { { "sensor", "cells1" } }, "value", (decimal)(sbyte)data[0], "°C");
                         yield return new DataPoint("temperature", new Dictionary<string, string> { { "sensor", "cells2" } }, "value", (decimal)(sbyte)data[1], "°C");
                         yield return new DataPoint("temperature", new Dictionary<string, string> { { "sensor", "cells3" } }, "value", (decimal)(sbyte)data[2], "°C");
@@ -23,66 +23,66 @@ namespace SurronCommunication.Parameter.Parsing
                         yield return new DataPoint("temperature", new Dictionary<string, string> { { "sensor", "chargeFet" } }, "value", (decimal)(sbyte)data[5], "°C");
                         yield return new DataPoint("temperature", new Dictionary<string, string> { { "sensor", "softStart" } }, "value", (decimal)(sbyte)data[6], "°C");
                         break;
-                    case BmsParameters.Parameters.BatteryVoltage:
+                    case BmsParameterId.BatteryVoltage:
                         yield return new DataPoint("batteryVoltage", [], "measured", BinaryPrimitives.ReadUInt32LittleEndian(data) / 1000m, "V");
                         break;
-                    case BmsParameters.Parameters.BatteryCurrent:
+                    case BmsParameterId.BatteryCurrent:
                         yield return new DataPoint("batteryCurrent", [], "value", BinaryPrimitives.ReadInt32LittleEndian(data) / 1000m, "A");
                         break;
-                    case BmsParameters.Parameters.BatteryPercent:
+                    case BmsParameterId.BatteryPercent:
                         yield return new DataPoint("batteryPercent", [], "value", data[0], "%");
                         break;
-                    case BmsParameters.Parameters.BatteryHealth:
+                    case BmsParameterId.BatteryHealth:
                         yield return new DataPoint("batteryHealth", [], "value", data[0], "%");
                         break;
-                    case BmsParameters.Parameters.RemainingCapacity:
+                    case BmsParameterId.RemainingCapacity:
                         yield return new DataPoint("batteryCapacity", [], "remaining", BinaryPrimitives.ReadUInt32LittleEndian(data) / 1000m, "Ah");
                         break;
-                    case BmsParameters.Parameters.TotalCapacity:
+                    case BmsParameterId.TotalCapacity:
                         yield return new DataPoint("batteryCapacity", [], "total", BinaryPrimitives.ReadUInt32LittleEndian(data) / 1000m, "Ah");
                         break;
-                    case BmsParameters.Parameters.Statistics:
+                    case BmsParameterId.Statistics:
                         // duplicate
                         //yield return new DataPoint("batteryCapacity", [], "total", BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(0, 4)) / 1000m, "Ah");
                         yield return new DataPoint("batteryCapacityAccumulated", [], "lifetime", BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(4, 4)) / 1000m, "Ah");
                         yield return new DataPoint("batteryCapacityAccumulated", [], "cycle", BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(8, 4)) / 1000m, "Ah");
                         break;
-                    case BmsParameters.Parameters.BmsStatus:
+                    case BmsParameterId.BmsStatus:
                         yield return new DataPoint("bmsStatus", [], "value", HexUtils.BytesToHex(data));
                         break;
-                    case BmsParameters.Parameters.ChargeCycles:
+                    case BmsParameterId.ChargeCycles:
                         yield return new DataPoint("chargeCycles", [], "value", BinaryPrimitives.ReadUInt32LittleEndian(data));
                         break;
-                    case BmsParameters.Parameters.DesignedCapacity:
+                    case BmsParameterId.DesignedCapacity:
                         yield return new DataPoint("batteryCapacity", [], "designed", BinaryPrimitives.ReadUInt32LittleEndian(data) / 1000m, "Ah");
                         break;
-                    case BmsParameters.Parameters.DesignedVoltage:
+                    case BmsParameterId.DesignedVoltage:
                         yield return new DataPoint("batteryVoltage", [], "designed", BinaryPrimitives.ReadUInt32LittleEndian(data) / 1000m, "V");
                         break;
-                    case BmsParameters.Parameters.Versions:
+                    case BmsParameterId.Versions:
                         yield return new DataPoint("manufacturingData", [], "swVersion", new Version(data[1], data[0]).ToString());
                         yield return new DataPoint("manufacturingData", [], "hwVersion", new Version(data[3], data[2]).ToString());
                         yield return new DataPoint("manufacturingData", [], "fwIdx", AsciiToString(data.AsSpan(4, 4)));
                         break;
-                    case BmsParameters.Parameters.ManufacturingDate:
+                    case BmsParameterId.ManufacturingDate:
                         yield return new DataPoint("manufacturingData", [], "manufactureDate", new DateOnly(2000 + data[0], data[1], data[2]).ToString("yyyy'-'MM'-'dd"));
                         break;
-                    case BmsParameters.Parameters.RtcTime:
+                    case BmsParameterId.RtcTime:
                         yield return new DataPoint("rtcTime", [], "value", new DateTime(2000 + data[0], data[1], data[2], data[3], data[4], data[5]).ToString("s"));
                         break;
-                    case BmsParameters.Parameters.BmsManufacturer:
+                    case BmsParameterId.BmsManufacturer:
                         yield return new DataPoint("manufacturingData", [], "bmsManufacturer", AsciiToString(data));
                         break;
-                    case BmsParameters.Parameters.BatteryModel:
+                    case BmsParameterId.BatteryModel:
                         yield return new DataPoint("manufacturingData", [], "batteryModel", AsciiToString(data));
                         break;
-                    case BmsParameters.Parameters.CellType:
+                    case BmsParameterId.CellType:
                         yield return new DataPoint("manufacturingData", [], "cellType", AsciiToString(data));
                         break;
-                    case BmsParameters.Parameters.SerialNumber:
+                    case BmsParameterId.SerialNumber:
                         yield return new DataPoint("manufacturingData", [], "serialNumber", AsciiToString(data));
                         break;
-                    case BmsParameters.Parameters.CellVoltages1:
+                    case BmsParameterId.CellVoltages1:
                         {
                             for (int batIdx = 0; batIdx < 16; batIdx++)
                             {
@@ -91,7 +91,7 @@ namespace SurronCommunication.Parameter.Parsing
                             }
                             break;
                         }
-                    case BmsParameters.Parameters.CellVoltages2:
+                    case BmsParameterId.CellVoltages2:
                         {
                             for (int batIdx = 0; batIdx < 16; batIdx++)
                             {
@@ -100,7 +100,7 @@ namespace SurronCommunication.Parameter.Parsing
                             }
                             break;
                         }
-                    case BmsParameters.Parameters.History:
+                    case BmsParameterId.History:
                         yield return new DataPoint("history", [], $"currentOutMax", BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(0, 4)) / 1000m, "A");
                         yield return new DataPoint("history", [], $"currentInMax", BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(4, 4)) / 1000m, "A");
                         yield return new DataPoint("history", [], $"voltageCellMax", BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(8, 2)) / 1000m, "V");
@@ -115,10 +115,10 @@ namespace SurronCommunication.Parameter.Parsing
             }
             else if (parameterType == ParameterType.Esc)
             {
-                switch ((EscParameters.Parameters)parameter)
+                switch ((EscParameterId)parameter)
                 {
-                    case EscParameters.Parameters.Unknown_72:
-                    case EscParameters.Parameters.Unknown_75:
+                    case EscParameterId.Unknown_72:
+                    case EscParameterId.Unknown_75:
                     default:
                         yield return new DataPoint($"escUnknown", [], $"unknown_{parameter}", HexUtils.BytesToHex(data));
                         break;

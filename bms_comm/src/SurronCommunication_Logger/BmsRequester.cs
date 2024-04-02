@@ -10,14 +10,14 @@ namespace SurronCommunication_Logger
     internal class BmsRequester
     {
         private readonly ISurronCommunicationHandler _bmsCommunicationHandler;
-        private readonly BmsParameters.Parameters[] _parametersSlow;
-        private readonly BmsParameters.Parameters[] _parametersFast;
+        private readonly BmsParameterId[] _parametersSlow;
+        private readonly BmsParameterId[] _parametersFast;
         private readonly Hashtable _currentValuesSlow;
         private readonly Hashtable _currentValuesFast;
 
         public event ParameterUpdateEventHandler? ParameterUpdateEvent;
 
-        public BmsRequester(ISurronCommunicationHandler bmsCommunicationHandler, BmsParameters.Parameters[] parametersSlow, BmsParameters.Parameters[] parametersFast)
+        public BmsRequester(ISurronCommunicationHandler bmsCommunicationHandler, BmsParameterId[] parametersSlow, BmsParameterId[] parametersFast)
         {
             _bmsCommunicationHandler = bmsCommunicationHandler;
             _parametersSlow = parametersSlow;
@@ -59,7 +59,7 @@ namespace SurronCommunication_Logger
         private void ReadAndPublish(DateTime now, bool fast)
         {
             Hashtable currentValues;
-            BmsParameters.Parameters[] parametersToRead;
+            BmsParameterId[] parametersToRead;
             LogCategory logCategory;
 
             if (fast)
