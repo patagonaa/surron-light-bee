@@ -1,28 +1,34 @@
-﻿using SurronCommunication.Parameter.Parsing;
-using SurronCommunication_Logging.Logging;
+﻿using SurronCommunication_Logging.Logging;
 using System;
+using System.IO;
+
+#if NANOFRAMEWORK_1_0
 using System.Buffers.Binary;
 using System.Collections;
-using System.IO;
-using System.Text;
+#else
+using SurronCommunication.Parameter.Parsing;
 using System.Collections.Generic;
-using System.Linq;
+#endif
 
 namespace SurronCommunication_Logging.Parsing
 {
     public static class LogConverter
     {
+#if !NANOFRAMEWORK_1_0
         public static IEnumerable<string> ReadAndConvertToInflux(Stream stream)
         {
-            var entries = ReadFromStream(stream);
+            byte[]? buffer = null;
+            var bufferPos = 0;
 
-            var currentValues = new Dictionary<(LogCategory Category, byte ParamId), byte[]>();
-            foreach (var entry in entries)
+            var currentValues = new LogEntryStore();
+            while (true)
             {
-                foreach (var entryValue in entry.Values)
-                {
-                    currentValues[(entry.Category, entryValue.Param)] = entryValue.Data;
-                }
+                var entry = ReadFromStream(stream, ref buffer, ref bufferPos);
+
+                if (entry == null)
+                    break;
+
+                var allValues = currentValues.AddAndGetLogEntriesForCategory(entry.Category, entry.Values);
 
                 var parameterType = entry.Category switch
                 {
@@ -32,16 +38,78 @@ namespace SurronCommunication_Logging.Parsing
                     _ => throw new NotSupportedException(),
                 };
 
-                var parsedData = currentValues.Where(x => x.Key.Category == entry.Category).SelectMany(x => ParameterParser.GetDataPointsForParameter(parameterType, x.Key.ParamId, x.Value));
-                foreach (var lineGroup in parsedData.GroupBy(x => (x.Measurement, string.Join(',', x.Labels))))
+                foreach (LogEntryValue logValue in allValues)
                 {
-                    var groupList = lineGroup.ToList();
-                    yield return GetInfluxLine(lineGroup.Key.Measurement, groupList[0].Labels, groupList.Select(x => (x.FieldName, x.Value)), entry.Time);
+                    var dataPoints = ParameterParser.GetDataPointsForParameter(parameterType, logValue.Param, logValue.Data);
+
+                    foreach (var point in dataPoints)
+                    {
+                        yield return InfluxConverter.GetInfluxLine(point.Measurement, point.Labels, point.Fields, point.Values, entry.Time);
+                    }
                 }
             }
         }
+#endif
 
-        private static IEnumerable<LogEntry> ReadFromStream(Stream logFile)
+#if NANOFRAMEWORK_1_0
+        public class LogEntryStore
+        {
+            private Hashtable[] _entries;
+
+            public LogEntryStore()
+            {
+                _entries = new Hashtable[3]
+                {
+                    new Hashtable(), // BmsFast = 1,
+                    new Hashtable(), // BmsSlow,
+                    new Hashtable(), // Esc
+                };
+            }
+
+            public ICollection AddAndGetLogValuesForCategory(LogCategory category, ICollection values)
+            {
+                var table = _entries[(byte)category-1];
+                foreach (LogEntryValue entryValue in values)
+                {
+                    if (entryValue.Data == null)
+                        throw new ArgumentException("Data must be set");
+
+                    table[entryValue.Param] = entryValue;
+                }
+                return table.Values;
+            }
+        }
+#else
+        public class LogEntryStore
+        {
+            private Dictionary<LogCategory, Dictionary<byte, LogEntryValue>> _entries;
+
+            public LogEntryStore()
+            {
+                _entries = new Dictionary<LogCategory, Dictionary<byte, LogEntryValue>>()
+                {
+                    { LogCategory.BmsFast, new Dictionary<byte, LogEntryValue>() },
+                    { LogCategory.BmsSlow, new Dictionary<byte, LogEntryValue>() },
+                    { LogCategory.Esc, new Dictionary<byte, LogEntryValue>() }
+                };
+            }
+
+            public ICollection<LogEntryValue> AddAndGetLogEntriesForCategory(LogCategory category, ICollection<LogEntryValue> values)
+            {
+                var table = _entries[category];
+                foreach (LogEntryValue entryValue in values)
+                {
+                    if (entryValue.Data == null)
+                        throw new ArgumentException("Data must be set");
+
+                    table[entryValue.Param] = entryValue;
+                }
+                return table.Values;
+            }
+        }
+#endif
+
+        public static LogEntry? ReadFromStream(Stream logFile)
         {
             // this always reads one bufferLength of bytes, deserializes a single log entry,
             // then resets the stream position to the beginning of the next log entry, then repeats (until the end of the file).
@@ -51,76 +119,59 @@ namespace SurronCommunication_Logging.Parsing
 
             var bufferLength = 256;
             byte[] buffer = new byte[bufferLength];
-            var position = 0;
-            while (true)
-            {
-                logFile.Position = position;
-                var bufferPosition = 0;
-                while (bufferPosition < bufferLength)
-                {
-                    int readBytes = logFile.Read(buffer, bufferPosition, bufferLength - bufferPosition);
-                    if (readBytes == 0)
-                        break;
-                    bufferPosition += readBytes;
-                }
+            var oldFilePosition = logFile.Position;
 
-                var handledLength = LogSerializer.Deserialize(buffer.AsSpan(0, bufferPosition), out var logEntry);
-                if (handledLength == 0 || logEntry == null)
+            var bufferPosition = 0;
+            while (bufferPosition < bufferLength)
+            {
+                int readBytes = logFile.Read(buffer, bufferPosition, bufferLength - bufferPosition);
+                if (readBytes == 0)
                     break;
-                yield return logEntry;
-                position += handledLength;
+                bufferPosition += readBytes;
             }
+
+            var handledLength = LogSerializer.Deserialize(buffer.AsSpan(0, bufferPosition), out var logEntry);
+            if (handledLength == 0 || logEntry == null)
+                return null;
+            logFile.Position = oldFilePosition + handledLength;
+            return logEntry;
         }
 
-        private static string GetInfluxLine(string measurement, Dictionary<string, string> labels, IEnumerable<(string FieldName, object Value)> values, DateTime time)
+        public static LogEntry? ReadFromStream(Stream logFile, ref byte[]? buffer, ref int bufferPos)
         {
-            return $"{Escape(measurement, [',', ' '])}" +
-                $"{string.Join("", labels.Select(x => $",{Escape(x.Key, [',', '=', ' '])}={Escape(x.Value, [',', '=', ' '])}"))} " +
-                $"{string.Join(",", values.Select(x => $"{Escape(x.FieldName, [',', '=', ' '])}={FormatValue(x.Value)}"))} " +
-                $"{(ulong)(time - DateTime.UnixEpoch).TotalNanoseconds}";
+            // this is janky as heck
+            // first we read 4096 bytes and once we cross 4096-256, we just seek back 4096-256 and set the buffer position to the right place.
+            // this is probably buggy, idk
 
-            static string Escape(string value, char[] chars)
+            if (buffer == null)
             {
-                var sb = new StringBuilder(value);
-                sb.Replace("\\", "\\\\");
-                foreach (var c in chars)
-                {
-                    sb.Replace($"{c}", $"\\{c}");
-                }
-                return sb.ToString();
+                buffer = new byte[4096];
+                logFile.Read(buffer, 0, buffer.Length);
             }
 
-            static string FormatValue(object x)
+            var bufferLength = buffer.Length;
+            var packetLen = 256;
+
+            var threshold = bufferLength - packetLen;
+
+            if (bufferPos > threshold)
             {
-                if (x is string strValue)
+                bufferPos -= threshold;
+                logFile.Seek(-packetLen, SeekOrigin.Current);
+                var readBytes = logFile.Read(buffer, 0, bufferLength);
+                if (readBytes < bufferLength)
                 {
-                    return $"\"{Escape(strValue, ['"'])}\"";
-                }
-                else if (IsInteger(x))
-                {
-                    return $"{x}i";
-                }
-                else if (IsNumeric(x))
-                {
-                    return x.ToString()!;
-                }
-                else
-                {
-                    throw new ArgumentException($"Invalid Object {x}");
-                }
-                static bool IsInteger(object o)
-                {
-                    var numType = typeof(IBinaryInteger<>);
-                    return o.GetType().GetInterfaces().Any(iface =>
-                        iface.IsGenericType && (iface.GetGenericTypeDefinition() == numType));
-                }
-                static bool IsNumeric(object o)
-                {
-                    var numType = typeof(INumber<>);
-                    return o.GetType().GetInterfaces().Any(iface =>
-                        iface.IsGenericType && (iface.GetGenericTypeDefinition() == numType));
+                    // handle end of file by just zeroing out the rest and relying on deserialize to detect that and stop
+                    // janky but should work?
+                    Array.Clear(buffer, readBytes, bufferLength - readBytes);
                 }
             }
+
+            var handledLength = LogSerializer.Deserialize(buffer.AsSpan(bufferPos, packetLen), out var logEntry);
+            if (handledLength == 0 || logEntry == null)
+                return null;
+            bufferPos += handledLength;
+            return logEntry;
         }
     }
 }

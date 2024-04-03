@@ -2,9 +2,9 @@
 using System.Text;
 
 #if NANOFRAMEWORK_1_0
-using LogEntryValueList = System.Collections.IList;
+using LogEntryValueList = System.Collections.ICollection;
 #else
-using LogEntryValueList = System.Collections.Generic.IList<SurronCommunication_Logging.Logging.LogEntryValue>;
+using LogEntryValueList = System.Collections.Generic.ICollection<SurronCommunication_Logging.Logging.LogEntryValue>;
 #endif
 
 namespace SurronCommunication_Logging.Logging
@@ -25,12 +25,13 @@ namespace SurronCommunication_Logging.Logging
         public override string ToString()
         {
             var sb = new StringBuilder();
-            for (int i = 0; i < Values.Count; i++)
+            int i = 0;
+            foreach (LogEntryValue logEntryValue in Values)
             {
-                var logEntryValue = Values[i];
                 if (i != 0)
                     sb.Append(", ");
                 sb.Append(logEntryValue.ToString());
+                i++;
             }
 
             return $"{Time:yyyy'-'MM'-'dd'T'HH'-'mm'-'ss.fff'Z'} - {Category} - {sb}";

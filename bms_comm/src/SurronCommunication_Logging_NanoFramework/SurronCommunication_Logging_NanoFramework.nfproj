@@ -23,6 +23,11 @@
     <Compile Include="..\SurronCommunication_Logging\Logging\LogEntry.cs" Link="Logging\LogEntry.cs" />
     <Compile Include="..\SurronCommunication_Logging\Logging\LogEntryValue.cs" Link="Logging\LogEntryValue.cs" />
     <Compile Include="..\SurronCommunication_Logging\Logging\LogSerializer.cs" Link="Logging\LogSerializer.cs" />
+    <Compile Include="..\SurronCommunication_Logging\Parsing\DataPoint.cs" Link="Parsing\DataPoint.cs" />
+    <Compile Include="..\SurronCommunication_Logging\Parsing\InfluxConverter.cs" Link="Parsing\InfluxConverter.cs" />
+    <Compile Include="..\SurronCommunication_Logging\Parsing\LogConverter.cs" Link="Parsing\LogConverter.cs" />
+    <Compile Include="..\SurronCommunication_Logging\Parsing\ParameterParser.cs" Link="Parsing\ParameterParser.cs" />
+    <Compile Include="..\SurronCommunication_Logging\Parsing\ParameterType.cs" Link="Parsing\ParameterType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -32,11 +37,17 @@
     <Reference Include="mscorlib">
       <HintPath>..\packages\nanoFramework.CoreLibrary.1.15.5\lib\mscorlib.dll</HintPath>
     </Reference>
+    <Reference Include="nanoFramework.System.Collections">
+      <HintPath>..\packages\nanoFramework.System.Collections.1.5.31\lib\nanoFramework.System.Collections.dll</HintPath>
+    </Reference>
     <Reference Include="nanoFramework.System.Text">
       <HintPath>..\packages\nanoFramework.System.Text.1.2.54\lib\nanoFramework.System.Text.dll</HintPath>
     </Reference>
     <Reference Include="System.Buffers.Binary.BinaryPrimitives">
       <HintPath>..\packages\nanoFramework.System.Buffers.Binary.BinaryPrimitives.1.2.418\lib\System.Buffers.Binary.BinaryPrimitives.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Streams">
+      <HintPath>..\packages\nanoFramework.System.IO.Streams.1.1.56\lib\System.IO.Streams.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

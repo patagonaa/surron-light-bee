@@ -1,22 +1,31 @@
-﻿using System.Collections.Generic;
+﻿#if NANOFRAMEWORK_1_0
+using LabelCollection = System.Collections.Hashtable;
+#else
+using LabelCollection = System.Collections.Generic.Dictionary<string, string>;
+#endif
 
 namespace SurronCommunication.Parameter.Parsing
 {
     public class DataPoint
     {
-        public DataPoint(string measurement, Dictionary<string, string> labels, string fieldName, object value, string? unit = null)
+        public DataPoint(string measurement, LabelCollection? labels, string fieldName, object value)
         {
             Measurement = measurement;
             Labels = labels;
-            FieldName = fieldName;
-            Value = value;
-            Unit = unit;
+            Fields = new[] { fieldName };
+            Values = new[] { value };
+        }
+        public DataPoint(string measurement, LabelCollection? labels, string[] fields, object[] values)
+        {
+            Measurement = measurement;
+            Labels = labels;
+            Fields = fields;
+            Values = values;
         }
 
         public string Measurement { get; }
-        public Dictionary<string, string> Labels { get; }
-        public string FieldName { get; }
-        public object Value { get; }
-        public string? Unit { get; }
+        public LabelCollection? Labels { get; }
+        public string[] Fields { get; }
+        public object[] Values { get; }
     }
 }

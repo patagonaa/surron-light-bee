@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
+
 #if NANOFRAMEWORK_1_0
 using ReadOnlySpanByte = System.SpanByte;
 #else
@@ -60,6 +61,11 @@ namespace SurronCommunication_Logging.Logging
                 position += 8;
 
                 var category = (LogCategory)buffer[position++];
+                if(category == 0)
+                {
+                    logEntry = null;
+                    return 0;
+                }
 
                 var valueCount = buffer[position++];
 
