@@ -126,10 +126,10 @@ namespace SurronCommunication_Logger
 
                     foreach (DataPoint dataPoint in dataPoints)
                     {
-                        InfluxConverter.AppendInfluxLine(sw, dataPoint.Measurement, dataPoint.Labels, dataPoint.Fields, dataPoint.Values, entry.Time);
+                        InfluxConverter.AppendInfluxLine(sw, dataPoint.Measurement, dataPoint.LabelKey, dataPoint.LabelValue, dataPoint.Fields, dataPoint.Values, entry.Time);
                         sw.WriteLine();
 
-                        //sw.WriteLine(InfluxConverter.GetInfluxLine(dataPoint.Measurement, dataPoint.Labels, dataPoint.Fields, dataPoint.Values, entry.Time));
+                        //sw.WriteLine(InfluxConverter.GetInfluxLine(dataPoint.Measurement, dataPoint.LabelKey, dataPoint.LabelValue, dataPoint.Fields, dataPoint.Values, entry.Time));
                         numLines++;
 
                         if (numLines % 100 == 0)

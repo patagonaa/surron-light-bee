@@ -8,23 +8,23 @@ namespace SurronCommunication.Parameter.Parsing
 {
     public class DataPoint
     {
-        public DataPoint(string measurement, LabelCollection? labels, string fieldName, object value)
+        public DataPoint(string measurement, string? labelKey, string? labelValue, string fieldName, object value)
+            : this(measurement, labelKey, labelValue, new[] { fieldName }, new[] { value })
         {
-            Measurement = measurement;
-            Labels = labels;
-            Fields = new[] { fieldName };
-            Values = new[] { value };
         }
-        public DataPoint(string measurement, LabelCollection? labels, string[] fields, object[] values)
+
+        public DataPoint(string measurement, string? labelKey, string? labelValue, string[] fields, object[] values)
         {
             Measurement = measurement;
-            Labels = labels;
+            LabelKey = labelKey;
+            LabelValue = labelValue;
             Fields = fields;
             Values = values;
         }
 
         public string Measurement { get; }
-        public LabelCollection? Labels { get; }
+        public string? LabelKey { get; set; }
+        public string? LabelValue { get; set; }
         public string[] Fields { get; }
         public object[] Values { get; }
     }

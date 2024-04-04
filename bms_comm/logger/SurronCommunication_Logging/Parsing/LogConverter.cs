@@ -46,7 +46,7 @@ namespace SurronCommunication_Logging.Parsing
 
                     foreach (var point in dataPoints)
                     {
-                        yield return InfluxConverter.GetInfluxLine(point.Measurement, point.Labels, point.Fields, point.Values, entry.Time);
+                        yield return InfluxConverter.GetInfluxLine(point.Measurement, point.LabelKey, point.LabelValue, point.Fields, point.Values, entry.Time);
                     }
                 }
             }

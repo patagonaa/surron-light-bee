@@ -16,16 +16,12 @@ namespace SurronCommunication_Logging.Parsing
         private static readonly char[] _commaEqualsSpace = new[] { ' ', ',', '=' };
         private static readonly char[] _doubleQuote = new[] { '"' };
         private static readonly long _unixEpochTicks = DateTime.UnixEpoch.Ticks;
-        public static void AppendInfluxLine(TextWriter tw, string measurement, LabelCollection? labels, string[] valueKeys, object[] values, DateTime time)
+        public static void AppendInfluxLine(TextWriter tw, string measurement, string? labelKey, string? labelValue, string[] valueKeys, object[] values, DateTime time)
         {
             tw.Write(Escape(measurement, _commaSpace));
-            if (labels != null)
+            if (labelKey != null && labelValue != null)
             {
-                foreach (string key in labels.Keys)
-                {
-                    var value = (string)labels[key];
-                    tw.Write($",{Escape(key, _commaEqualsSpace)}={Escape(value, _commaEqualsSpace)}");
-                }
+                tw.Write($",{Escape(labelKey, _commaEqualsSpace)}={Escape(labelValue, _commaEqualsSpace)}");
             }
             tw.Write(' ');
 
@@ -42,21 +38,15 @@ namespace SurronCommunication_Logging.Parsing
             tw.Write((time.Ticks - _unixEpochTicks) * 100);
         }
 
-        public static string GetInfluxLine(string measurement, LabelCollection? labels, string[] valueKeys, object[] values, DateTime time)
+        public static string GetInfluxLine(string measurement, string? labelKey, string? labelValue, string[] valueKeys, object[] values, DateTime time)
         {
-            var sb = new StringBuilder(32);
             var formattedLabels = string.Empty;
-            if (labels != null)
+            if (labelKey != null && labelValue != null)
             {
-                foreach (string key in labels.Keys)
-                {
-                    var value = (string)labels[key];
-                    sb.Append($",{Escape(key, _commaEqualsSpace)}={Escape(value, _commaEqualsSpace)}");
-                }
-                formattedLabels = sb.ToString();
-                sb.Clear();
+                formattedLabels = ($",{Escape(labelKey, _commaEqualsSpace)}={Escape(labelValue, _commaEqualsSpace)}");
             }
 
+            var sb = new StringBuilder(32);
             for (int i = 0; i < valueKeys.Length; i++)
             {
                 if (i != 0)
