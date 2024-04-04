@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SurronCommunication\SurronCommunication.csproj" />
+    <ProjectReference Include="..\..\library\SurronCommunication\SurronCommunication.csproj" />
   </ItemGroup>
 
 </Project>

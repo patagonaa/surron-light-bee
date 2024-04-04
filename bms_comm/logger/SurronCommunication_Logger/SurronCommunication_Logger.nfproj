@@ -99,8 +99,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\library\SurronCommunication_NanoFramework\SurronCommunication_NanoFramework.nfproj" />
     <ProjectReference Include="..\SurronCommunication_Logging_NanoFramework\SurronCommunication_Logging_NanoFramework.nfproj" />
-    <ProjectReference Include="..\SurronCommunication_NanoFramework\SurronCommunication_NanoFramework.nfproj" />
   </ItemGroup>
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets')" />
   <ProjectExtensions>

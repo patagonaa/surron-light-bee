@@ -1,0 +1,75 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34723.18
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_Logging", "SurronCommunication_Logging\SurronCommunication_Logging.csproj", "{907BF934-AC67-48D6-AEAF-9F1DD49A9F03}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01_Library_External", "01_Library_External", "{3871EB98-C734-4F95-B786-AE33469619E3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02_Library", "02_Library", "{73E1A93B-5164-4250-ABB9-31C64E28A55E}"
+EndProject
+Project("{11A8DD76-328B-46DF-9F39-F559912D0360}") = "SurronCommunication_Logging_NanoFramework", "SurronCommunication_Logging_NanoFramework\SurronCommunication_Logging_NanoFramework.nfproj", "{B584751D-2781-42C3-BB00-A30F8F4DEACD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03_Apps", "03_Apps", "{2B4C6832-1217-42EC-B18A-B1ED98A05611}"
+EndProject
+Project("{11A8DD76-328B-46DF-9F39-F559912D0360}") = "SurronCommunication_Logger", "SurronCommunication_Logger\SurronCommunication_Logger.nfproj", "{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication_Logger_LogUtil", "SurronCommunication_Logger_LogUtil\SurronCommunication_Logger_LogUtil.csproj", "{69B5C2D0-0F4E-427D-B634-A5B58F8B1A1E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurronCommunication", "..\library\SurronCommunication\SurronCommunication.csproj", "{C34AF35A-AD0B-406A-A6D0-F3F466E6269B}"
+EndProject
+Project("{11A8DD76-328B-46DF-9F39-F559912D0360}") = "SurronCommunication_NanoFramework", "..\library\SurronCommunication_NanoFramework\SurronCommunication_NanoFramework.nfproj", "{FACF843D-F024-44B2-9A40-B030755D0A50}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{907BF934-AC67-48D6-AEAF-9F1DD49A9F03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{907BF934-AC67-48D6-AEAF-9F1DD49A9F03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{907BF934-AC67-48D6-AEAF-9F1DD49A9F03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{907BF934-AC67-48D6-AEAF-9F1DD49A9F03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{69B5C2D0-0F4E-427D-B634-A5B58F8B1A1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69B5C2D0-0F4E-427D-B634-A5B58F8B1A1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69B5C2D0-0F4E-427D-B634-A5B58F8B1A1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69B5C2D0-0F4E-427D-B634-A5B58F8B1A1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C34AF35A-AD0B-406A-A6D0-F3F466E6269B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C34AF35A-AD0B-406A-A6D0-F3F466E6269B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C34AF35A-AD0B-406A-A6D0-F3F466E6269B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C34AF35A-AD0B-406A-A6D0-F3F466E6269B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FACF843D-F024-44B2-9A40-B030755D0A50}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{907BF934-AC67-48D6-AEAF-9F1DD49A9F03} = {73E1A93B-5164-4250-ABB9-31C64E28A55E}
+		{B584751D-2781-42C3-BB00-A30F8F4DEACD} = {73E1A93B-5164-4250-ABB9-31C64E28A55E}
+		{CD8E41B8-2781-4BB7-80CD-1FB98824FB8C} = {2B4C6832-1217-42EC-B18A-B1ED98A05611}
+		{69B5C2D0-0F4E-427D-B634-A5B58F8B1A1E} = {2B4C6832-1217-42EC-B18A-B1ED98A05611}
+		{C34AF35A-AD0B-406A-A6D0-F3F466E6269B} = {3871EB98-C734-4F95-B786-AE33469619E3}
+		{FACF843D-F024-44B2-9A40-B030755D0A50} = {3871EB98-C734-4F95-B786-AE33469619E3}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FAA85DD5-6E0E-43E7-8420-5B47E8D87988}
+	EndGlobalSection
+EndGlobal

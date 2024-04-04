@@ -28,7 +28,7 @@ namespace SurronCommunication.BatterySimulator
 
             var token = cts.Token;
 
-            using var communicationHandler = SurronCommunicationHandler.FromSerialPort("COM8");
+            using var communicationHandler = SurronCommunicationHandler.FromSerialPort("COM5");
             try
             {
                 var i = 0;
@@ -57,7 +57,7 @@ namespace SurronCommunication.BatterySimulator
                             var responsePacket = SurronDataPacket.Create(SurronCmd.ReadResponse, packet.Address, packet.Parameter, packet.DataLength, responseBuffer);
                             Console.WriteLine($"> {responsePacket}");
                             //if (i++ % 10 == 5)
-                            //    communicationHandler._communication.Write(new byte[] { 0x10 }, CancellationToken.None);
+                            //    communicationHandler.Communication.Write(new byte[] { 0x10 }, CancellationToken.None);
                             communicationHandler.SendPacket(responsePacket, token);
                         }
                     }

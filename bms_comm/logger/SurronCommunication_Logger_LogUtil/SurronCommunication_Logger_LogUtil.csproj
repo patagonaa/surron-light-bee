@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SurronCommunication\SurronCommunication.csproj" />
+    <ProjectReference Include="..\..\library\SurronCommunication\SurronCommunication.csproj" />
     <ProjectReference Include="..\SurronCommunication_Logging\SurronCommunication_Logging.csproj" />
   </ItemGroup>
 
