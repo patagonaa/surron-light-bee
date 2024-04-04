@@ -1,6 +1,8 @@
 ﻿using SurronCommunication_Logging.Logging;
 using System;
 using System.IO;
+using System.Diagnostics;
+
 
 #if NANOFRAMEWORK_1_0
 using System.Buffers.Binary;
@@ -140,12 +142,14 @@ namespace SurronCommunication_Logging.Parsing
         public static LogEntry? ReadFromStream(Stream logFile, ref byte[]? buffer, ref int bufferPos)
         {
             // this is janky as heck
-            // first we read 4096 bytes and once we cross 4096-256, we just seek back 4096-256 and set the buffer position to the right place.
+            // first we read bufferSize bytes and once we cross bufferSize-packetLen, we just seek back bufferSize-packetLen, fill the buffer again and set the buffer position to the right place.
             // this is probably buggy, idk
+
+            var bufferSize = 512;
 
             if (buffer == null)
             {
-                buffer = new byte[4096];
+                buffer = new byte[bufferSize];
                 logFile.Read(buffer, 0, buffer.Length);
             }
 
@@ -154,7 +158,9 @@ namespace SurronCommunication_Logging.Parsing
 
             var threshold = bufferLength - packetLen;
 
-            if (bufferPos > threshold)
+            // don't do this if we are at end of file, as seeking back one threshold doesn't give us the correct position
+            // (because the file position is not the last read position + bufferLength)
+            if (bufferPos > threshold && logFile.Position < logFile.Length)
             {
                 bufferPos -= threshold;
                 logFile.Seek(-packetLen, SeekOrigin.Current);
@@ -167,7 +173,8 @@ namespace SurronCommunication_Logging.Parsing
                 }
             }
 
-            var handledLength = LogSerializer.Deserialize(buffer.AsSpan(bufferPos, packetLen), out var logEntry);
+            var handledLength = LogSerializer.Deserialize(buffer.AsSpan(bufferPos), out var logEntry);
+            Debug.Assert(handledLength < packetLen);
             if (handledLength == 0 || logEntry == null)
                 return null;
             bufferPos += handledLength;
