@@ -29,16 +29,18 @@ namespace SurronCommunication_Logger
         public void Run(string path)
         {
             CancellationTokenSource cs = new(30000);
+            Console.WriteLine("Connecting to wifi");
             var success = WifiNetworkHelper.Reconnect(token: cs.Token);
             if (!success)
             {
-                Debug.WriteLine($"Can't connect to the network, error: {WifiNetworkHelper.Status}");
+                Console.WriteLine($"Can't connect to the network, error: {WifiNetworkHelper.Status}");
                 if (WifiNetworkHelper.HelperException != null)
                 {
-                    Debug.WriteLine($"ex: {WifiNetworkHelper.HelperException}");
+                    Console.WriteLine($"ex: {WifiNetworkHelper.HelperException}");
                 }
                 return;
             }
+            Console.WriteLine("Connected");
 
             var uri = $"{_uri.TrimEnd('/')}/write?db={_database}";
             var credential = new NetworkCredential(_username, _password, AuthenticationType.Basic);
@@ -52,21 +54,46 @@ namespace SurronCommunication_Logger
 
                 using var fileStream = File.OpenRead(logFile);
 
-                Console.WriteLine($"Starting upload of {logFile}");
+                for (int i = 0; ; i++)
+                {
+                    try
+                    {
+                        Console.WriteLine($"Starting upload of {logFile}");
 
-                if (!UploadFile(fileStream, credential, uri))
-                    break;
+                        UploadFile(fileStream, credential, uri);
 
-                Console.WriteLine($"Finished {logFile}");
-                File.Delete(logFile);
+                        Console.WriteLine($"Finished {logFile}");
+                        File.Delete(logFile);
+
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Exception: {ex}");
+                        if (i >= 10)
+                        {
+                            Console.WriteLine("Retry limit reached!");
+                            break;
+                        }
+                    }
+                }
             }
         }
 
-        private bool UploadFile(Stream stream, NetworkCredential credential, string uri)
+        private void UploadFile(Stream stream, NetworkCredential credential, string uri)
         {
+            using var wr = (HttpWebRequest)WebRequest.Create(uri);
+            wr.SendChunked = true;
+            wr.KeepAlive = false;
+            wr.Credentials = credential;
+            wr.Method = "POST";
+
+            using var requestStream = wr.GetRequestStream();
+
             var currentValues = new LogConverter.LogEntryStore();
             using var ms = new MemoryStream();
             var sw = new StreamWriter(ms) { NewLine = "\n" };
+
             var numLines = 0;
 
             var stepSw = Stopwatch.StartNew();
@@ -103,89 +130,62 @@ namespace SurronCommunication_Logger
                         sw.WriteLine();
 
                         //sw.WriteLine(InfluxConverter.GetInfluxLine(dataPoint.Measurement, dataPoint.Labels, dataPoint.Fields, dataPoint.Values, entry.Time));
-
                         numLines++;
 
-                        if (numLines >= 100)
+                        if (numLines % 100 == 0)
                         {
                             sw.Flush();
                             ms.Position = 0;
                             var collectMs = stepSw.ElapsedMilliseconds;
                             stepSw.Restart();
 
-                            if (!UploadWithRetries(ms, credential, uri))
-                            {
-                                Debug.WriteLine("Upload failed:");
-                                var arr = ms.ToArray();
-                                Debug.WriteLine(Encoding.UTF8.GetString(arr, 0, arr.Length));
-                                return false;
-                            }
+                            WriteChunk(requestStream, ms);
+
                             stepSw.Stop();
                             outBytes += ms.Length;
                             Console.WriteLine($"Uploaded Influx batch ({ms.Length} bytes, {(double)stream.Position / stream.Length * 100:F2}%, {stream.Position / ((totalSw.ElapsedMilliseconds + 1) / 1000d):F2}B/s in, {outBytes / ((totalSw.ElapsedMilliseconds + 1) / 1000d):F2}B/s out, Upload: {stepSw.ElapsedMilliseconds}, Collect: {collectMs})!");
 
                             ms.SetLength(0);
-                            numLines = 0;
                             stepSw.Restart();
                         }
                     }
                 }
             }
+
             sw.Flush();
             ms.Position = 0;
-            if (!UploadWithRetries(ms, credential, uri))
-                return false;
-            Debug.WriteLine($"Uploaded Influx batch ({ms.Length} bytes)!");
+            WriteChunk(requestStream, ms);
+            outBytes += ms.Length;
 
-            return true;
-        }
+            var chunkedEnd = Encoding.UTF8.GetBytes("0\r\n\r\n");
+            requestStream.Write(chunkedEnd, 0, chunkedEnd.Length);
 
-        private bool UploadWithRetries(Stream stream, NetworkCredential credential, string uri)
-        {
-            for (int i = 0; i < 10; i++)
+            requestStream.Flush();
+
+            Debug.WriteLine($"Uploaded Influx file ({stream.Length} -> {outBytes} bytes / {numLines} lines in {totalSw.ElapsedMilliseconds}ms)!");
+
+            using (var response = (HttpWebResponse)wr.GetResponse())
             {
-                if (Upload(stream, credential, uri))
-                    return true;
-                stream.Position = 0;
-                Console.WriteLine("Retry");
-            }
-            return false;
-        }
-
-        private bool Upload(Stream stream, NetworkCredential credential, string uri)
-        {
-            using var wr = (HttpWebRequest)WebRequest.Create(uri);
-            wr.KeepAlive = false;
-            wr.Credentials = credential;
-            wr.Method = "POST";
-
-            wr.ContentLength = stream.Length;
-
-            try
-            {
-                using (var requestStream = wr.GetRequestStream())
+                if (response.StatusCode > HttpStatusCode.OK && response.StatusCode < HttpStatusCode.BadRequest)
                 {
-                    stream.CopyTo(requestStream);
-
-                    using (var response = (HttpWebResponse)wr.GetResponse())
-                    {
-                        if (response.StatusCode > HttpStatusCode.OK && response.StatusCode < HttpStatusCode.BadRequest)
-                        {
-                            return true;
-                        }
-                        using (var streamReader = new StreamReader(response.GetResponseStream()))
-                        {
-                            Console.WriteLine($"Influx Upload failed: {response.StatusCode} {streamReader.ReadToEnd()}");
-                        }
-                        return false;
-                    }
+                    return;
+                }
+                using (var streamReader = new StreamReader(response.GetResponseStream()))
+                {
+                    throw new Exception($"Influx Upload failed: {response.StatusCode} {streamReader.ReadToEnd()}");
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Influx Upload failed: {ex}");
-                return false;
-            }
+        }
+
+        private void WriteChunk(Stream requestStream, MemoryStream ms)
+        {
+            var chunkHeader = Encoding.UTF8.GetBytes($"{ms.Length:X}\r\n");
+            requestStream.Write(chunkHeader, 0, chunkHeader.Length);
+
+            ms.CopyTo(requestStream);
+
+            var chunkFooter = Encoding.UTF8.GetBytes($"\r\n");
+            requestStream.Write(chunkFooter, 0, chunkFooter.Length);
         }
     }
 }
