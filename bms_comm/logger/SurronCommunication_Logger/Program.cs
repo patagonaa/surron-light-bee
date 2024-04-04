@@ -12,37 +12,71 @@ namespace SurronCommunication_Logger
 {
     public class Program
     {
-        private static readonly TimeSpan _utcBmsTimeOffset = new TimeSpan(8, 20, 54).Negate();
-
         public static void Main()
         {
+            // Config
+            var utcBmsTimeOffset = new TimeSpan(8, 20, 54).Negate();
+            var buttonPin = 0;
+            var debugWsLedPin = 38;
+            var logPath = "I:";
+
+            Configuration.SetPinFunction(Gpio.IO16, DeviceFunction.COM2_RX); // ESC
+            Configuration.SetPinFunction(Gpio.IO17, DeviceFunction.COM2_TX); // ESC
+
+            Configuration.SetPinFunction(Gpio.IO06, DeviceFunction.COM3_RX); // BMS
+            Configuration.SetPinFunction(Gpio.IO07, DeviceFunction.COM3_TX); // BMS
+
+            var influxUrl = "http://influxdb.example.com";
+            var influxDatabase = "surronlogger";
+            var influxUsername = "admin";
+            var influxPassword = "admin";
+            // ---
+
             var gpioController = new GpioController();
 
             var cts = new CancellationTokenSource();
-
-            var button = gpioController.OpenPin(0, PinMode.InputPullUp);
+            var button = gpioController.OpenPin(buttonPin, PinMode.InputPullUp);
             button.DebounceTimeout = TimeSpan.FromMilliseconds(10);
             button.ValueChanged += (o, e) =>
             {
                 if (e.ChangeType == PinEventTypes.Falling)
                     cts.Cancel();
             };
+            var token = cts.Token;
 
-            Ws28xx debugLed = new Ws2808(38, 1);
+            Ws28xx debugLed = new Ws2808(debugWsLedPin, 1);
 
             debugLed.Image.SetPixel(0, 0, 10, 0, 0);
             debugLed.Update();
 
-            Configuration.SetPinFunction(Gpio.IO16, DeviceFunction.COM2_RX);
-            Configuration.SetPinFunction(Gpio.IO17, DeviceFunction.COM2_TX);
-
-            Configuration.SetPinFunction(Gpio.IO06, DeviceFunction.COM3_RX);
-            Configuration.SetPinFunction(Gpio.IO07, DeviceFunction.COM3_TX);
-
             var bmsCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM3", "BMS");
             var escCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM2", "ESC");
 
-            while (true)
+            GetCurrentTime(bmsCommunicationHandler, utcBmsTimeOffset, token);
+
+            if (!token.IsCancellationRequested)
+            {
+                debugLed.Image.SetPixel(0, 0, 0, 10, 0);
+                debugLed.Update();
+
+                RunLogger(bmsCommunicationHandler, escCommunicationHandler, logPath, token);
+            }
+
+            debugLed.Image.SetPixel(0, 0, 0, 0, 10);
+            debugLed.Update();
+
+            var uploader = new InfluxUploader(influxUrl, influxDatabase, influxUsername, influxPassword);
+            uploader.Run(logPath);
+
+            debugLed.Image.SetPixel(0, 0, 10, 0, 0);
+            debugLed.Update();
+
+            Thread.Sleep(Timeout.Infinite);
+        }
+
+        private static void GetCurrentTime(SurronCommunicationHandler bmsCommunicationHandler, TimeSpan utcBmsTimeOffset, CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
             {
                 Debug.WriteLine("Trying to read BMS RTC...");
                 var response = bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)BmsParameterId.RtcTime, BmsParameters.GetLength(BmsParameterId.RtcTime), CancellationToken.None);
@@ -54,7 +88,7 @@ namespace SurronCommunication_Logger
                     {
                         var rtcTime = new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]);
                         Debug.WriteLine($"Got RTC Time: {rtcTime:s}");
-                        var correctedTime = rtcTime + _utcBmsTimeOffset;
+                        var correctedTime = rtcTime + utcBmsTimeOffset;
                         Debug.WriteLine($"Correcting to: {correctedTime:s}");
                         Rtc.SetSystemTime(correctedTime);
                         break;
@@ -62,7 +96,11 @@ namespace SurronCommunication_Logger
                 }
                 Thread.Sleep(1000);
             }
+            Console.WriteLine($"aborted RTC read, time is now {DateTime.UtcNow:s}");
+        }
 
+        private static void RunLogger(SurronCommunicationHandler bmsCommunicationHandler, SurronCommunicationHandler escCommunicationHandler, string logPath, CancellationToken token)
+        {
             // BMS requester
             var parametersSlow = new BmsParameterId[]
             {
@@ -92,7 +130,7 @@ namespace SurronCommunication_Logger
 
             var bmsRequester = new BmsRequester(bmsCommunicationHandler, parametersSlow, parametersFast);
 
-            var bmsReadThread = new Thread(() => bmsRequester.Run(cts.Token));
+            var bmsReadThread = new Thread(() => bmsRequester.Run(token));
             bmsReadThread.Start();
 
             // ESC request responder
@@ -106,7 +144,8 @@ namespace SurronCommunication_Logger
             };
             var escResponder = new EscResponder(escCommunicationHandler, escReadParameters);
             bmsRequester.ParameterUpdateEvent += escResponder.SetBmsData;
-            var escRespondThread = new Thread(() => escResponder.Run(cts.Token));
+
+            var escRespondThread = new Thread(() => escResponder.Run(token));
             escRespondThread.Start();
 
             // Logger
@@ -132,33 +171,16 @@ namespace SurronCommunication_Logger
             //    }
             //}
 
-            var logPath = "I:";
-
             var dataLogger = new DataLogger($"{logPath}\\log_{DateTime.UtcNow:yyyy'-'MM'-'dd'_'HH'-'mm'-'ss}.bin");
             bmsRequester.ParameterUpdateEvent += dataLogger.SetData;
             escResponder.ParameterUpdateEvent += dataLogger.SetData;
-            var dataLoggerThread = new Thread(() => dataLogger.Run(cts.Token));
+
+            var dataLoggerThread = new Thread(() => dataLogger.Run(token));
             dataLoggerThread.Start();
-
-            debugLed.Image.SetPixel(0, 0, 0, 10, 0);
-            debugLed.Update();
-
-            cts.Token.WaitHandle.WaitOne();
-
-            debugLed.Image.SetPixel(0, 0, 0, 0, 10);
-            debugLed.Update();
 
             bmsReadThread.Join();
             escRespondThread.Join();
             dataLoggerThread.Join();
-
-            var uploader = new InfluxUploader("http://influxdb.example.com", "surronlogger", "admin", "admin");
-            uploader.Run(logPath);
-
-            debugLed.Image.SetPixel(0, 0, 10, 0, 0);
-            debugLed.Update();
-
-            Thread.Sleep(Timeout.Infinite);
         }
     }
 }
