@@ -23,8 +23,8 @@ namespace SurronCommunication.Parameter.Parsing
         }
 
         public string Measurement { get; }
-        public string? LabelKey { get; set; }
-        public string? LabelValue { get; set; }
+        public string? LabelKey { get; }
+        public string? LabelValue { get; }
         public string[] Fields { get; }
         public object[] Values { get; }
     }

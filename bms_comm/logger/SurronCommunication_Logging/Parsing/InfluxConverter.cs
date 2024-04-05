@@ -1,12 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Text;
-
-#if NANOFRAMEWORK_1_0
-using LabelCollection = System.Collections.Hashtable;
-#else
-using LabelCollection = System.Collections.Generic.Dictionary<string, string>;
-#endif
 
 namespace SurronCommunication_Logging.Parsing
 {
@@ -16,26 +9,49 @@ namespace SurronCommunication_Logging.Parsing
         private static readonly char[] _commaEqualsSpace = new[] { ' ', ',', '=' };
         private static readonly char[] _doubleQuote = new[] { '"' };
         private static readonly long _unixEpochTicks = DateTime.UnixEpoch.Ticks;
-        public static void AppendInfluxLine(TextWriter tw, string measurement, string? labelKey, string? labelValue, string[] valueKeys, object[] values, DateTime time)
+
+        private static readonly Encoding _encoding = Encoding.UTF8;
+        public static void AppendInfluxLine(byte[] buffer, ref int bufferPos, string measurement, string? labelKey, string? labelValue, string[] valueKeys, object[] values, DateTime time)
         {
-            tw.Write(Escape(measurement, _commaSpace));
+            var measurementEscaped = Escape(measurement, _commaSpace);
+            bufferPos += _encoding.GetBytes(measurementEscaped, 0, measurementEscaped.Length, buffer, bufferPos);
+
             if (labelKey != null && labelValue != null)
             {
-                tw.Write($",{Escape(labelKey, _commaEqualsSpace)}={Escape(labelValue, _commaEqualsSpace)}");
+                buffer[bufferPos++] = (byte)',';
+
+                var labelKeyEscaped = Escape(labelKey, _commaEqualsSpace);
+                bufferPos += _encoding.GetBytes(labelKeyEscaped, 0, labelKeyEscaped.Length, buffer, bufferPos);
+
+                buffer[bufferPos++] = (byte)'=';
+
+                var labelValueEscaped = Escape(labelValue, _commaEqualsSpace);
+                bufferPos += _encoding.GetBytes(labelValueEscaped, 0, labelValueEscaped.Length, buffer, bufferPos);
             }
-            tw.Write(' ');
+
+            buffer[bufferPos++] = (byte)' ';
 
             for (int i = 0; i < valueKeys.Length; i++)
             {
                 if (i != 0)
                 {
-                    tw.Write(',');
+                    buffer[bufferPos++] = (byte)',';
                 }
 
-                tw.Write($"{Escape(valueKeys[i], _commaEqualsSpace)}={FormatValue(values[i])}");
+                var key = Escape(valueKeys[i], _commaEqualsSpace);
+                bufferPos += _encoding.GetBytes(key, 0, key.Length, buffer, bufferPos);
+
+                buffer[bufferPos++] = (byte)'=';
+
+                var value = FormatValue(values[i]);
+                bufferPos += _encoding.GetBytes(value, 0, value.Length, buffer, bufferPos);
             }
-            tw.Write(' ');
-            tw.Write((time.Ticks - _unixEpochTicks) * 100);
+            buffer[bufferPos++] = (byte)' ';
+
+            var timestamp = ((time.Ticks - _unixEpochTicks) * 100).ToString();
+            bufferPos += _encoding.GetBytes(timestamp, 0, timestamp.Length, buffer, bufferPos);
+
+            buffer[bufferPos++] = (byte)'\n';
         }
 
         public static string GetInfluxLine(string measurement, string? labelKey, string? labelValue, string[] valueKeys, object[] values, DateTime time)
@@ -43,7 +59,7 @@ namespace SurronCommunication_Logging.Parsing
             var formattedLabels = string.Empty;
             if (labelKey != null && labelValue != null)
             {
-                formattedLabels = ($",{Escape(labelKey, _commaEqualsSpace)}={Escape(labelValue, _commaEqualsSpace)}");
+                formattedLabels = $",{Escape(labelKey, _commaEqualsSpace)}={Escape(labelValue, _commaEqualsSpace)}";
             }
 
             var sb = new StringBuilder(32);

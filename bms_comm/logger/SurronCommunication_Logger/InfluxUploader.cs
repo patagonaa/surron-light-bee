@@ -91,22 +91,22 @@ namespace SurronCommunication_Logger
             using var requestStream = wr.GetRequestStream();
 
             var currentValues = new LogConverter.LogEntryStore();
-            using var ms = new MemoryStream();
-            var sw = new StreamWriter(ms) { NewLine = "\n" };
+            var outputBuffer = new byte[8192];
+            var outputBufferPos = 0;
 
             var numLines = 0;
 
             var stepSw = Stopwatch.StartNew();
             var totalSw = Stopwatch.StartNew();
 
-            byte[]? buffer = null;
-            int bufferPos = 0;
+            byte[]? inputBuffer = null;
+            int inputBufferPos = 0;
 
             long outBytes = 0;
 
             while (true)
             {
-                var entry = LogConverter.ReadFromStream(stream, ref buffer, ref bufferPos);
+                var entry = LogConverter.ReadFromStream(stream, ref inputBuffer, ref inputBufferPos);
 
                 if (entry == null)
                     break;
@@ -126,36 +126,29 @@ namespace SurronCommunication_Logger
 
                     foreach (DataPoint dataPoint in dataPoints)
                     {
-                        InfluxConverter.AppendInfluxLine(sw, dataPoint.Measurement, dataPoint.LabelKey, dataPoint.LabelValue, dataPoint.Fields, dataPoint.Values, entry.Time);
-                        sw.WriteLine();
-
-                        //sw.WriteLine(InfluxConverter.GetInfluxLine(dataPoint.Measurement, dataPoint.LabelKey, dataPoint.LabelValue, dataPoint.Fields, dataPoint.Values, entry.Time));
+                        InfluxConverter.AppendInfluxLine(outputBuffer, ref outputBufferPos, dataPoint.Measurement, dataPoint.LabelKey, dataPoint.LabelValue, dataPoint.Fields, dataPoint.Values, entry.Time);
                         numLines++;
 
                         if (numLines % 100 == 0)
                         {
-                            sw.Flush();
-                            ms.Position = 0;
                             var collectMs = stepSw.ElapsedMilliseconds;
                             stepSw.Restart();
 
-                            WriteChunk(requestStream, ms);
+                            WriteChunk(requestStream, outputBuffer, outputBufferPos);
 
                             stepSw.Stop();
-                            outBytes += ms.Length;
-                            Console.WriteLine($"Uploaded Influx batch ({ms.Length} bytes, {(double)stream.Position / stream.Length * 100:F2}%, {stream.Position / ((totalSw.ElapsedMilliseconds + 1) / 1000d):F2}B/s in, {outBytes / ((totalSw.ElapsedMilliseconds + 1) / 1000d):F2}B/s out, Upload: {stepSw.ElapsedMilliseconds}, Collect: {collectMs})!");
+                            outBytes += outputBufferPos;
+                            Console.WriteLine($"Uploaded Influx batch ({outputBufferPos} bytes, {(double)stream.Position / stream.Length * 100:F2}%, {stream.Position / ((totalSw.ElapsedMilliseconds + 1) / 1000d):F2}B/s in, {outBytes / ((totalSw.ElapsedMilliseconds + 1) / 1000d):F2}B/s out, Upload: {stepSw.ElapsedMilliseconds}, Collect: {collectMs})!");
 
-                            ms.SetLength(0);
+                            outputBufferPos = 0;
                             stepSw.Restart();
                         }
                     }
                 }
             }
 
-            sw.Flush();
-            ms.Position = 0;
-            WriteChunk(requestStream, ms);
-            outBytes += ms.Length;
+            WriteChunk(requestStream, outputBuffer, outputBufferPos);
+            outBytes += outputBufferPos;
 
             var chunkedEnd = Encoding.UTF8.GetBytes("0\r\n\r\n");
             requestStream.Write(chunkedEnd, 0, chunkedEnd.Length);
@@ -177,12 +170,12 @@ namespace SurronCommunication_Logger
             }
         }
 
-        private void WriteChunk(Stream requestStream, MemoryStream ms)
+        private void WriteChunk(Stream requestStream, byte[] buffer, int count)
         {
-            var chunkHeader = Encoding.UTF8.GetBytes($"{ms.Length:X}\r\n");
+            var chunkHeader = Encoding.UTF8.GetBytes($"{count:X}\r\n");
             requestStream.Write(chunkHeader, 0, chunkHeader.Length);
 
-            ms.CopyTo(requestStream);
+            requestStream.Write(buffer, 0, count);
 
             var chunkFooter = Encoding.UTF8.GetBytes($"\r\n");
             requestStream.Write(chunkFooter, 0, chunkFooter.Length);
