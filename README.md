@@ -90,18 +90,18 @@ The [wiring diagram](./docs/Surron_Wiring_Diagram_A_Ebikes.pdf) is pretty helpfu
 
 | Position      | Color       | Description                                                                    | Connection                   |
 |---------------|-------------|--------------------------------------------------------------------------------|------------------------------|
-| Top Center    | Green       | Ground (does not seem to be connected on battery side)                         |                              |
+| Top Center    | Green       | Ground                                                                         |                              |
 | Bottom Left   | Red-Black   | 60V in (enables battery display)                                               | from ignition switch         |
 | Bottom Right  | White-Red   | RS485 A, data/programming/diagnostics                                          | battery-controller-dashboard |
 | Top Right     | White-Black | RS485 B, data/programming/diagnostics                                          | battery-controller-dashboard |
 | Top Left      | Black-Blue  | Comms                                                                          | battery-controller           |
 | Bottom Center | Purple      | Comms (missing pin on battery, used for diagnostics LED harness[^led-harness]) | battery-controller           |
 
+The communication part of the BMS seems to be galvanically isolated from the battery part (no continuity between ground/RS485 and battery ground).
+
 ### Headlights
 
-The stock headlights seem to be of dubious quality, as mine has died two times within the first year or so (with one of the two LEDs not lighting up anymore). Due to being replaced in warranty, I could not do an analysis of the failure (yet).
-
-The connector seems to be `DJ7026-2-11` (headlight side) / `DJ7026-2-21` (bike side)
+The stock headlights seem to be of dubious quality (or I am very, very unlucky), as mine has died three times within the two years or so (with one of the two LEDs not lighting up anymore). Due to being replaced in warranty, I could not do an analysis of the failure (yet).
 
 ### GPS tracker
 
