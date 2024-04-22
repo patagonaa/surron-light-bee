@@ -68,9 +68,9 @@ namespace SurronCommunication_Logging.Parsing
                 };
             }
 
-            public ICollection AddAndGetLogValuesForCategory(LogCategory category, ICollection values)
+            public ICollection AddAndGetLogEntriesForCategory(LogCategory category, ICollection values)
             {
-                var table = _entries[(byte)category-1];
+                var table = _entries[(byte)category - 1];
                 foreach (LogEntryValue entryValue in values)
                 {
                     if (entryValue.Data == null)

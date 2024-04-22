@@ -111,7 +111,7 @@ namespace SurronCommunication_Logger
                 if (entry == null)
                     break;
 
-                var allValues = currentValues.AddAndGetLogValuesForCategory(entry.Category, entry.Values);
+                var allValues = currentValues.AddAndGetLogEntriesForCategory(entry.Category, entry.Values);
 
                 var parameterType = entry.Category switch
                 {

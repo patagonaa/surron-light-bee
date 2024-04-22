@@ -61,7 +61,7 @@ namespace SurronCommunication_Logging.Logging
                 position += 8;
 
                 var category = (LogCategory)buffer[position++];
-                if(category == 0)
+                if (category == 0)
                 {
                     logEntry = null;
                     return 0;
