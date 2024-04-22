@@ -26,10 +26,9 @@ namespace SurronCommunication_Logger
             Configuration.SetPinFunction(Gpio.IO06, DeviceFunction.COM3_RX); // BMS
             Configuration.SetPinFunction(Gpio.IO07, DeviceFunction.COM3_TX); // BMS
 
-            var influxUrl = "http://influxdb.example.com";
-            var influxDatabase = "surronlogger";
-            var influxUsername = "admin";
-            var influxPassword = "admin";
+            var uploadUrl = "http://surronlogger.example.com";
+            var uploadUsername = "admin";
+            var uploadPassword = "admin";
             // ---
 
             var gpioController = new GpioController();
