@@ -145,7 +145,7 @@ namespace SurronCommunication_Logging.Parsing
             // first we read bufferSize bytes and once we cross bufferSize-packetLen, we just seek back bufferSize-packetLen, fill the buffer again and set the buffer position to the right place.
             // this is probably buggy, idk
 
-            var bufferSize = 512;
+            var bufferSize = 4096;
 
             if (buffer == null)
             {

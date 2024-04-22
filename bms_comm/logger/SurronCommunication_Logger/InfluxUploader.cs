@@ -159,7 +159,7 @@ namespace SurronCommunication_Logger
 
             using (var response = (HttpWebResponse)wr.GetResponse())
             {
-                if (response.StatusCode > HttpStatusCode.OK && response.StatusCode < HttpStatusCode.BadRequest)
+                if (response.StatusCode >= HttpStatusCode.OK && response.StatusCode < HttpStatusCode.BadRequest)
                 {
                     return;
                 }

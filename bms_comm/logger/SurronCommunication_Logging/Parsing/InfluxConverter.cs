@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Text;
+#if !NANOFRAMEWORK_1_0
+using System.Globalization;
+#endif
 
 namespace SurronCommunication_Logging.Parsing
 {
@@ -111,7 +114,11 @@ namespace SurronCommunication_Logging.Parsing
             }
             else if (x is double doubleValue)
             {
+#if NANOFRAMEWORK_1_0
                 return doubleValue.ToString("F6");
+#else
+                return doubleValue.ToString("F6", CultureInfo.InvariantCulture);
+#endif
             }
             else
             {
