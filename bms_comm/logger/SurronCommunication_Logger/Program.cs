@@ -64,7 +64,7 @@ namespace SurronCommunication_Logger
             debugLed.Image.SetPixel(0, 0, 0, 0, 10);
             debugLed.Update();
 
-            var uploader = new InfluxUploader(influxUrl, influxDatabase, influxUsername, influxPassword);
+            var uploader = new HttpUploader(uploadUrl, uploadUsername, uploadPassword);
             uploader.Run(logPath);
 
             debugLed.Image.SetPixel(0, 0, 10, 0, 0);
@@ -82,6 +82,7 @@ namespace SurronCommunication_Logger
                 if (response != null)
                 {
                     Thread.Sleep(1000); // read RTC twice because the value is outdated right after wakeup
+                    Debug.WriteLine("Trying to read BMS RTC second time...");
                     response = bmsCommunicationHandler.ReadRegister(BmsParameters.BmsAddress, (byte)BmsParameterId.RtcTime, BmsParameters.GetLength(BmsParameterId.RtcTime), CancellationToken.None);
                     if (response != null)
                     {
@@ -90,7 +91,7 @@ namespace SurronCommunication_Logger
                         var correctedTime = rtcTime + utcBmsTimeOffset;
                         Debug.WriteLine($"Correcting to: {correctedTime:s}");
                         Rtc.SetSystemTime(correctedTime);
-                        break;
+                        return;
                     }
                 }
                 Thread.Sleep(1000);

@@ -52,6 +52,8 @@ namespace SurronCommunication_Logger
                 {
                     try
                     {
+                        fileStream.Position = 0;
+
                         Console.WriteLine($"Starting upload of {logFile}");
 
                         UploadFile(fileStream, credential, uri);
