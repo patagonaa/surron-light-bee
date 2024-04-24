@@ -28,7 +28,7 @@ All messages seem to have the same structure:
 
 Full message dumps of the bike (sniffed at the battery BMS connection) are available under `./dumps`
 
-Example code to work with the Surron RS485 bus is available under `./src`
+A library and example code to work with the Surron RS485 bus is available under `./src/library`. Also, there is code for an ESP32-based data logger using .NET NanoFramework (and corresponding InfluxDB Upload server) in `./src/logger`.
 
 My theory is, that the controller/ESC is the bus controller (only bus member that can send without being asked to), the battery responds to requests and the display only reads.
 Points in case:
