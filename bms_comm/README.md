@@ -2,42 +2,24 @@
 
 RS485 communication is done at 9600 baud 8N1.
 
-The BMS seems to have two sleep modes:
+Full message dumps of the bike (sniffed at the battery BMS connection) are available under `./dumps`
 
-- RS485 off
-    - happens after around 3 seconds, RS485 termination/pullup/pulldown is turned off and BMS takes some time / a few tries until it responds
-    - can be reenabled via RS485 communication, 60V input, button press or battery charging
-- standby
-    - happens after some minutes/hours
-    - can be reenabled with 60V input, button press or battery charging (though not via RS485)
+A library and example code I've written to work with the Surron RS485 bus is available under `./src/library`.
 
-Oddities:
-- When the BMS display is on (60V input, button pressed or charging), the BMS takes pretty long to respond sometimes (normal: ~10ms, when display is on: 80ms, maybe longer), probably while the microcontroller is busy updating the display.
-- When waking the BMS up (even just from the ~3s RS485 timeout), The RTC value is outdated and only changes to the correct value after a second or so.
-- BMS only seems to update its internal values every second or so, polling more often than that works, but does not really do anything.
+Also, there is code for an ESP32-based data logger using .NET NanoFramework (and corresponding InfluxDB Upload server) in `./src/logger`.
 
-## Message Structure
+## Message Format
 
 All messages seem to have the same structure:
-- Command (`46` = request, `47` = response, `57` = unsolicited)
+- Command (Hex `46` = request, `47` = response, `57` = unsolicited)
 - Address (2 bytes)
 - Parameter id (1 byte)
 - Parameter length (1 byte)
 - Data (0 - n bytes)
 - Checksum (1 byte = sum of all previous bytes)
 
-Full message dumps of the bike (sniffed at the battery BMS connection) are available under `./dumps`
-
-A library and example code to work with the Surron RS485 bus is available under `./src/library`. Also, there is code for an ESP32-based data logger using .NET NanoFramework (and corresponding InfluxDB Upload server) in `./src/logger`.
-
-My theory is, that the controller/ESC is the bus controller (only bus member that can send without being asked to), the battery responds to requests and the display only reads.
-Points in case:
-- responses (`47`) stop when battery is detached (requests and unsolicited messages keep on going)
-- unsolicited messages (`57`) contain the data received in the responses with a slight delay
-- unsolicited messages (`57`) contain multiple parameters (like battery percentage, battery voltage, status, etc.), which suggest those messages are aimed at the display.
-
-## Commands
-## `46` (Request)
+### Commands
+#### `46` (Request)
 request for a value / list of values
 - byte 0: command
 - byte 1-2: address
@@ -52,7 +34,7 @@ request for a value / list of values
 | `46` | `1601` | `09`  | `04` | `6A` |
 | `46` | `1601` | `0D`  | `01` | `6B` |
 
-## `47` (Response)
+#### `47` (Response)
 response to `46`
 - byte 0: command
 - byte 1-2: address
@@ -68,7 +50,7 @@ response to `46`
 | `47` | `1601` | `09`  | `04` | `6BF20000`     | `C8` |
 | `47` | `1601` | `0D`  | `01` | `4B`           | `B7` |
 
-## `57` (Unsolicited Response)
+#### `57` (Unsolicited Response / Status)
 - byte 0: command
 - byte 1-2: address
 - byte 3: parameter
@@ -81,6 +63,31 @@ response to `46`
 | `57` | `8301` | `48`  | `0C` | `0000000000000080000000` | `AF` |
 | `57` | `8301` | `48`  | `0C` | `4B63F20000000080000000` | `4F` |
 | `57` | `8301` | `4B`  | `02` | `00`                     | `28` |
+
+## Misc
+
+### Bus Controller
+
+My theory is, that the controller/ESC is the bus controller (only bus member that can send without being asked to), the battery responds to requests and the display only reads.
+Points in case:
+- responses (`47`) stop when battery is detached (requests and unsolicited messages keep on going)
+- unsolicited messages (`57`) contain the data received in the responses with a slight delay
+- unsolicited messages (`57`) contain multiple parameters (like battery percentage, battery voltage, status, etc.), which suggest those messages are aimed at the display.
+
+### Sleep Modes
+The BMS seems to have two sleep modes:
+
+- RS485 off
+    - happens after around 3 seconds, RS485 termination/pullup/pulldown is turned off and BMS takes some time / a few tries until it responds
+    - can be reenabled via RS485 communication, 60V input, button press or battery charging
+- standby
+    - happens after some minutes/hours
+    - can be reenabled with 60V input, button press or battery charging (though not via RS485)
+
+### Oddities
+- When the BMS display is on (60V input active, button pressed or charging), the BMS takes pretty long to respond sometimes (normal: ~10ms, when display is on: ~80ms, maybe longer), likely because the microcontroller is busy updating the display.
+- When waking the BMS up (even just from the ~3s RS485 timeout), The RTC value is outdated and only changes to the correct value after a second or so.
+- BMS only seems to update its internal values every second or so, polling more often than that works, but does not really do anything.
 
 ## Parameter Reverse Engineering
 ### Bike sniffing (see dumps under `./dumps`)
@@ -106,7 +113,7 @@ response to `46`
 - Byte 0: Battery percent (`4B` => 75%)
 - Byte 1-4: Battery voltage (uint32 `63F20000` => 62.051V)
 - Byte 5: ???
-- Byte 6: Brake status?? (usually `00`, can be `02`)
+- Byte 6: Brake status? (usually `00`, `02` when brake is pulled)
 - Byte 7: Error/Status Flags? (`81` with missing battery, `80` with kickstand down, `00` with kickstand up)
 - Bytes 8-10: ???
 
