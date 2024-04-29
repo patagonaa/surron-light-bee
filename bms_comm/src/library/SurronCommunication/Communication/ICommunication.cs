@@ -29,5 +29,10 @@ namespace SurronCommunication.Communication
         /// </summary>
         /// <exception cref="OperationCanceledException">Operation was canceled</exception>
         void DiscardInBuffer(CancellationToken token);
+
+        /// <summary>
+        /// Reset the communication layer
+        /// </summary>
+        void Reset();
     }
 }

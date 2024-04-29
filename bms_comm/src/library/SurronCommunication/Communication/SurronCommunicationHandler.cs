@@ -48,14 +48,14 @@ namespace SurronCommunication.Communication
                                 if (packet!.Address == address && packet.Parameter == parameter && packet.DataLength == paramLength)
                                     return packet.CommandData!;
                                 Debug.WriteLine($"{_logPrefix}: Wrong Packet {packet}");
-                                continue;
+                                break;
                             }
                         case SurronReadResult.Timeout:
                             Console.WriteLine($"{_logPrefix}: Timeout");
-                            continue;
+                            break;
                         case SurronReadResult.InvalidData:
                             Console.WriteLine($"{_logPrefix}: Invalid Data");
-                            continue;
+                            break;
                         default:
                             break;
                     }
@@ -87,39 +87,28 @@ namespace SurronCommunication.Communication
             var buffer = new byte[512];
             var bufferPos = 0;
 
-            const int cmdLength = 1;
-            while (true)
-            {
-                if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, cmdLength), timeoutMillis, token))
-                {
-                    packet = null;
-                    return SurronReadResult.Timeout;
-                }
-
-                if (buffer[0] == (byte)SurronCmd.ReadRequest || buffer[0] == (byte)SurronCmd.ReadResponse || buffer[0] == (byte)SurronCmd.Status)
-                    break;
-            }
-
-            bufferPos += cmdLength;
-
             var headerLength = SurronDataPacket.HeaderLength;
 
-            if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, headerLength - cmdLength), timeoutMillis, token))
+            if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, headerLength), timeoutMillis, token))
             {
+                _communication.Reset();
                 packet = null;
                 return SurronReadResult.Timeout;
             }
-            bufferPos += headerLength - cmdLength;
+            bufferPos += headerLength;
 
             var restLength = SurronDataPacket.GetPacketLengthFromHeader(buffer.AsSpan(0, headerLength)) - headerLength;
             if (restLength < 0)
             {
+                Debug.WriteLine($"Invalid data: {HexUtils.BytesToHex(buffer.AsSpan(0, headerLength).ToArray())}");
+                _communication.Reset();
                 packet = null;
                 return SurronReadResult.InvalidData;
             }
 
             if (!_communication.ReadExactly(buffer.AsSpan(bufferPos, restLength), timeoutMillis, token))
             {
+                _communication.Reset();
                 packet = null;
                 return SurronReadResult.Timeout;
             }
@@ -129,6 +118,7 @@ namespace SurronCommunication.Communication
             packet = SurronDataPacket.FromBytes(buffer.AsSpan(0, bufferPos));
             if (packet == null)
             {
+                _communication.Reset();
                 return SurronReadResult.InvalidData;
             }
 
