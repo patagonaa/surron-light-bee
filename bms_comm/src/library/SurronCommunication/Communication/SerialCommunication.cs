@@ -66,6 +66,9 @@ namespace SurronCommunication.Communication
 
         public bool ReadExactly(SpanByte buffer, int timeoutMillis, CancellationToken token)
         {
+            var cancelWaitHandle = token.WaitHandle;
+            var waitHandles = new[] { cancelWaitHandle, _dataReceivedEvent };
+
             EnsureOpen();
             var position = 0;
             var length = buffer.Length;
@@ -83,8 +86,9 @@ namespace SurronCommunication.Communication
                 }
                 else
                 {
-                    var gotData = _dataReceivedEvent.WaitOne(timeoutMillis, false);
-                    if (!gotData)
+                    var handleIndex = WaitHandle.WaitAny(waitHandles, timeoutMillis, false);
+                    // return value tells us if we got data or were cancelled, but we check cancellation on the top of this loop anyway.
+                    if (handleIndex == WaitHandle.WaitTimeout)
                     {
                         return false;
                     }
