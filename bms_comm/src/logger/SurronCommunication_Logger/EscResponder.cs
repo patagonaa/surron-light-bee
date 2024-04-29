@@ -89,6 +89,11 @@ namespace SurronCommunication_Logger
 
         public void SetBmsData(DateTime updateTime, LogCategory logCategory, Hashtable newData)
         {
+            if (logCategory != LogCategory.BmsFast && logCategory != LogCategory.BmsSlow)
+            {
+                throw new InvalidOperationException("SetBmsData should only be called with BMS data!");
+            }
+
             foreach (var readParameter in _escReadParameters)
             {
                 var requestedKey = (byte)readParameter;
