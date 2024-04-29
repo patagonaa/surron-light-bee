@@ -175,11 +175,15 @@ namespace SurronCommunication_Logger
             bmsRequester.ParameterUpdateEvent += dataLogger.SetData;
             escResponder.ParameterUpdateEvent += dataLogger.SetData;
 
-            var dataLoggerThread = new Thread(() => dataLogger.Run(token));
+            using var dataLoggerCts = new CancellationTokenSource();
+
+            var dataLoggerThread = new Thread(() => dataLogger.Run(dataLoggerCts.Token));
             dataLoggerThread.Start();
 
             bmsReadThread.Join();
             escRespondThread.Join();
+
+            dataLoggerCts.Cancel(); // cancel data logger / writer thread after other threads have finished so they can finish writing
             dataLoggerThread.Join();
         }
     }

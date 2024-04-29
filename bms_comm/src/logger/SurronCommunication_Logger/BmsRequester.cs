@@ -3,6 +3,7 @@ using SurronCommunication.Parameter;
 using SurronCommunication_Logging.Logging;
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Threading;
 
 namespace SurronCommunication_Logger
@@ -34,13 +35,17 @@ namespace SurronCommunication_Logger
 
             int updateCount = 0;
             var nextFastUpdate = DateTime.MinValue;
+
+            var cancelWaitHandle = token.WaitHandle;
             while (!token.IsCancellationRequested)
             {
                 var now = DateTime.UtcNow;
                 var sleepTime = nextFastUpdate - now;
                 if (sleepTime > TimeSpan.Zero)
                 {
-                    Thread.Sleep(sleepTime);
+                    var sleepTimeMs = sleepTime.Ticks / TimeSpan.TicksPerMillisecond;
+                    if (cancelWaitHandle.WaitOne(checked((int)sleepTimeMs), false))
+                        break;
                     now += sleepTime;
                 }
 
@@ -54,6 +59,7 @@ namespace SurronCommunication_Logger
                 nextFastUpdate = now + fastInterval;
                 updateCount++;
             }
+            Debug.WriteLine("Exiting BMS Requester");
         }
 
         private void ReadAndPublish(DateTime now, bool fast)

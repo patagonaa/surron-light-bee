@@ -84,6 +84,7 @@ namespace SurronCommunication_Logger
             catch (OperationCanceledException)
             {
             }
+            Debug.WriteLine("Exiting ESC Responder");
         }
 
         public void SetBmsData(DateTime updateTime, LogCategory logCategory, Hashtable newData)

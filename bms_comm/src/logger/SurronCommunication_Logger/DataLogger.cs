@@ -36,6 +36,8 @@ namespace SurronCommunication_Logger
             var bufferPos = 0;
             var pendingLogEntries = 0;
 
+            var cancelWaitHandle = token.WaitHandle;
+
             while (!token.IsCancellationRequested)
             {
                 LogEntry? logEntry = null;
@@ -46,7 +48,7 @@ namespace SurronCommunication_Logger
                 }
                 if (logEntry == null)
                 {
-                    Thread.Sleep(10000);
+                    cancelWaitHandle.WaitOne(10000, false);
                     continue;
                 }
 
@@ -74,6 +76,8 @@ namespace SurronCommunication_Logger
             }
 
             _file?.Dispose();
+
+            Debug.WriteLine("Exiting Data Logger");
         }
 
         private void WriteToFile(byte[] buffer, int offset, int length)
