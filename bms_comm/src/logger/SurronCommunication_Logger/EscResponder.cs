@@ -31,7 +31,7 @@ namespace SurronCommunication_Logger
             try
             {
                 var escStatus = new Hashtable();
-                while (token.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
                     var result = _escCommunicationHandler.ReceivePacket(Timeout.Infinite, token, out var packet);
 
