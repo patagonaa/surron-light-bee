@@ -22,6 +22,7 @@
     <Compile Include="BmsRequester.cs" />
     <Compile Include="DataLogger.cs" />
     <Compile Include="EscResponder.cs" />
+    <Compile Include="HttpLiveUploader.cs" />
     <Compile Include="HttpUploader.cs" />
     <Compile Include="HttpUploadOptions.cs" />
     <Compile Include="InfluxUploader.cs" />

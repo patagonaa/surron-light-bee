@@ -61,7 +61,7 @@ namespace SurronCommunication_Logger
                 debugLed.Image.SetPixel(0, 0, 0, 10, 0);
                 debugLed.Update();
 
-                RunLogger(bmsCommunicationHandler, escCommunicationHandler, logPath, token);
+                RunLogger(bmsCommunicationHandler, escCommunicationHandler, logPath, uploadOptions, token);
             }
 
             debugLed.Image.SetPixel(0, 0, 0, 0, 10);
@@ -162,7 +162,7 @@ namespace SurronCommunication_Logger
             return DateTime.MinValue;
         }
 
-        private static void RunLogger(SurronCommunicationHandler bmsCommunicationHandler, SurronCommunicationHandler escCommunicationHandler, string logPath, CancellationToken token)
+        private static void RunLogger(SurronCommunicationHandler bmsCommunicationHandler, SurronCommunicationHandler escCommunicationHandler, string logPath, HttpUploadOptions uploadOptions, CancellationToken token)
         {
             // BMS requester
             var parametersSlow = new BmsParameterId[]
@@ -243,8 +243,15 @@ namespace SurronCommunication_Logger
             var dataLoggerThread = new Thread(() => dataLogger.Run(dataLoggerCts.Token));
             dataLoggerThread.Start();
 
+            var liveUploader = new HttpLiveUploader(uploadOptions);
+            bmsRequester.ParameterUpdateEvent += liveUploader.SetData;
+            escResponder.ParameterUpdateEvent += liveUploader.SetData;
+            var liveUploaderThread = new Thread(() => liveUploader.Run(token));
+            liveUploaderThread.Start();
+
             bmsReadThread.Join();
             escRespondThread.Join();
+            liveUploaderThread.Join();
 
             dataLoggerCts.Cancel(); // cancel data logger / writer thread after other threads have finished so they can finish writing
             dataLoggerThread.Join();
