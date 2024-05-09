@@ -13,28 +13,31 @@ namespace SurronCommunication_Logger
         private readonly string _username;
         private readonly string _password;
 
-        public HttpUploader(string uri, string username, string password)
+        public HttpUploader(HttpUploadOptions uploadOptions)
         {
-            _uri = uri;
-            _username = username;
-            _password = password;
+            _uri = uploadOptions.Url;
+            _username = uploadOptions.Username;
+            _password = uploadOptions.Password;
         }
 
         public void Run(string path)
         {
             CancellationTokenSource cs = new(30000);
-            Console.WriteLine("Connecting to wifi");
-            var success = WifiNetworkHelper.Reconnect(token: cs.Token);
-            if (!success)
+            if (WifiNetworkHelper.Status != NetworkHelperStatus.NetworkIsReady)
             {
-                Console.WriteLine($"Can't connect to the network, error: {WifiNetworkHelper.Status}");
-                if (WifiNetworkHelper.HelperException != null)
+                Console.WriteLine("Connecting to wifi");
+                var success = WifiNetworkHelper.Reconnect(token: cs.Token);
+                if (!success)
                 {
-                    Console.WriteLine($"ex: {WifiNetworkHelper.HelperException}");
+                    Console.WriteLine($"Can't connect to the network, error: {WifiNetworkHelper.Status}");
+                    if (WifiNetworkHelper.HelperException != null)
+                    {
+                        Console.WriteLine($"ex: {WifiNetworkHelper.HelperException}");
+                    }
+                    return;
                 }
-                return;
+                Console.WriteLine("Connected");
             }
-            Console.WriteLine("Connected");
 
             var uri = $"{_uri.TrimEnd('/')}/InfluxUpload";
             var credential = new NetworkCredential(_username, _password, AuthenticationType.Basic);
@@ -76,7 +79,7 @@ namespace SurronCommunication_Logger
             }
         }
 
-        private void UploadFile(Stream stream, NetworkCredential credential, string uri)
+        private static void UploadFile(Stream stream, NetworkCredential credential, string uri)
         {
             using var wr = (HttpWebRequest)WebRequest.Create(uri);
             wr.KeepAlive = false;

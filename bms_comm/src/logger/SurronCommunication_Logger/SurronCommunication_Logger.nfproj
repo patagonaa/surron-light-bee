@@ -23,6 +23,7 @@
     <Compile Include="DataLogger.cs" />
     <Compile Include="EscResponder.cs" />
     <Compile Include="HttpUploader.cs" />
+    <Compile Include="HttpUploadOptions.cs" />
     <Compile Include="InfluxUploader.cs" />
     <Compile Include="PacketUpdateEventHandler.cs" />
     <Compile Include="Program.cs" />

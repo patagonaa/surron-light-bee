@@ -26,9 +26,12 @@ namespace SurronCommunication_Logger
             Configuration.SetPinFunction(Gpio.IO06, DeviceFunction.COM3_RX); // BMS
             Configuration.SetPinFunction(Gpio.IO07, DeviceFunction.COM3_TX); // BMS
 
-            var uploadUrl = "http://surronlogger.example.com";
-            var uploadUsername = "admin";
-            var uploadPassword = "admin";
+            var uploadOptions = new HttpUploadOptions
+            {
+                Url = "http://surronlogger.example.com",
+                Username = "admin",
+                Password = "admin"
+            };
             // ---
 
             var gpioController = new GpioController();
@@ -64,7 +67,7 @@ namespace SurronCommunication_Logger
             debugLed.Image.SetPixel(0, 0, 0, 0, 10);
             debugLed.Update();
 
-            var uploader = new HttpUploader(uploadUrl, uploadUsername, uploadPassword);
+            var uploader = new HttpUploader(uploadOptions);
             uploader.Run(logPath);
 
             debugLed.Image.SetPixel(0, 0, 10, 0, 0);
