@@ -6,7 +6,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Device.Gpio;
 using nanoFramework.Runtime.Native;
-using Iot.Device.Ws28xx.Esp32;
+using nanoFramework.Networking;
+using System.IO;
 
 namespace SurronCommunication_Logger
 {
@@ -15,7 +16,6 @@ namespace SurronCommunication_Logger
         public static void Main()
         {
             // Config
-            var utcBmsTimeOffset = new TimeSpan(8, 20, 54).Negate();
             var buttonPin = 0;
             var debugWsLedPin = 38;
             var logPath = "I:";
@@ -54,7 +54,7 @@ namespace SurronCommunication_Logger
             var bmsCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM3", "BMS");
             var escCommunicationHandler = SurronCommunicationHandler.FromSerialPort("COM2", "ESC");
 
-            GetCurrentTime(bmsCommunicationHandler, utcBmsTimeOffset, token);
+            GetCurrentTime(bmsCommunicationHandler, token);
 
             if (!token.IsCancellationRequested)
             {
@@ -76,7 +76,70 @@ namespace SurronCommunication_Logger
             Thread.Sleep(Timeout.Infinite);
         }
 
-        private static void GetCurrentTime(SurronCommunicationHandler bmsCommunicationHandler, TimeSpan utcBmsTimeOffset, CancellationToken cancellationToken)
+        private static void GetCurrentTime(SurronCommunicationHandler bmsCommunicationHandler, CancellationToken cancellationToken)
+        {
+            using var connectCts = new CancellationTokenSource(10000);
+            using (cancellationToken.Register(() => { connectCts.Cancel(); }))
+            {
+                GetNtpTime(connectCts.Token);
+            }
+            bool hasNtpTime = false;
+            if (!connectCts.IsCancellationRequested)
+            {
+                hasNtpTime = true;
+                Console.WriteLine("Got NTP time!");
+            }
+
+            var bmsTime = GetBmsTime(bmsCommunicationHandler, cancellationToken);
+            if (bmsTime == DateTime.MinValue)
+            {
+                return;
+            }
+            else
+            {
+                var timeOffsetFile = "I:\\bms_rtc_offset.txt";
+                if (hasNtpTime)
+                {
+                    var offset = (DateTime.UtcNow - bmsTime).TotalSeconds;
+                    Console.WriteLine("Got NTP and BMS time, saving offset!");
+                    File.WriteAllText(timeOffsetFile, offset.ToString());
+                }
+                else
+                {
+                    if (File.Exists(timeOffsetFile))
+                    {
+                        var offset = double.Parse(File.ReadAllText(timeOffsetFile));
+                        Console.WriteLine("Got BMS time, applying with saved offset!");
+                        Rtc.SetSystemTime(bmsTime.AddSeconds(offset));
+                    }
+                    else
+                    {
+                        Console.WriteLine("Got BMS time but no offset, applying BMS time without offset!");
+                        Rtc.SetSystemTime(bmsTime);
+                    }
+                }
+            }
+        }
+
+        private static void GetNtpTime(CancellationToken cancellationToken)
+        {
+            while (WifiNetworkHelper.Status != NetworkHelperStatus.NetworkIsReady)
+            {
+                Console.WriteLine("Connecting to wifi");
+                var success = WifiNetworkHelper.Reconnect(requiresDateTime: true, token: cancellationToken);
+                if (!success)
+                {
+                    Console.WriteLine($"Can't connect to the network, error: {WifiNetworkHelper.Status}");
+                    if (WifiNetworkHelper.HelperException != null)
+                    {
+                        Console.WriteLine($"ex: {WifiNetworkHelper.HelperException}");
+                    }
+                    Thread.Sleep(30000);
+                }
+                Debug.WriteLine($"Got NTP Time: {DateTime.UtcNow:s}");
+            }
+        }
+        private static DateTime GetBmsTime(SurronCommunicationHandler bmsCommunicationHandler, CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -91,15 +154,12 @@ namespace SurronCommunication_Logger
                     {
                         var rtcTime = new DateTime(2000 + response[0], response[1], response[2], response[3], response[4], response[5]);
                         Debug.WriteLine($"Got RTC Time: {rtcTime:s}");
-                        var correctedTime = rtcTime + utcBmsTimeOffset;
-                        Debug.WriteLine($"Correcting to: {correctedTime:s}");
-                        Rtc.SetSystemTime(correctedTime);
-                        return;
+                        return rtcTime;
                     }
                 }
                 Thread.Sleep(1000);
             }
-            Console.WriteLine($"aborted RTC read, time is now {DateTime.UtcNow:s}");
+            return DateTime.MinValue;
         }
 
         private static void RunLogger(SurronCommunicationHandler bmsCommunicationHandler, SurronCommunicationHandler escCommunicationHandler, string logPath, CancellationToken token)
