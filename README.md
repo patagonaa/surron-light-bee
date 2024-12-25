@@ -71,14 +71,20 @@ The pinout is:
 - Pin 2: negative
 - Pin 3: not connected
 
-#### Discharge Connector
+#### Post-2024 discharge+BMS connector
+Since some time 2024 Surron batteries combined the separate discharge and BMS connectors into a single connector for both.
+As of now, it's only known that the connector seems to be (at least similar to) a HIGO HG-F.B-S824E[^reddit-new-connector][^higo-connector].
+
+
+
+#### Pre-2024 discharge Connector
 ![RCPROPLUS connector with positive and negative marking](./images/battery-discharge-connector.jpg)
 
 The discharge connector is a RCPROPLUS "REB 6808 Pro D6 P8" and uses the "female" contacts for both pins on the battery side. The pin toward the corner of the battery (with the larger plastic shroud around the contact) is the _positive_ terminal.
 
 So the connector on the bike side has two "male" contacts and the one with the larger plastic shroud is the _negative_ terminal.
 
-#### BMS Connector
+#### Pre-2024 BMS Connector
 
 ![6-pin bms connector on the battery with tab at the bottom](./images/battery-bms-connector.jpg)
 
@@ -128,3 +134,7 @@ According to the FCC application `2A92B-QL-TBOX-JM` [^tracker-fcc] and the user 
 [^tracker-fcc]: GPS tracker FCC application (FCCID `2A92B-QL-TBOX-JM`):
     - https://fccid.io/2A92B-QL-TBOX-JM
     - https://www.fcc.gov/oet/ea/fccid
+
+[^reddit-new-connector]: Reddit post about new connector https://old.reddit.com/r/Surron/comments/1cbyk7l/2024_lbx_battery_connector/
+
+[^higo-connector]: Connector https://www.higocon.com/eapc/hg-f.b-s824e.html
