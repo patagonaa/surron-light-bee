@@ -19,6 +19,7 @@ A question I had when handling this pack for the first time was "What the heck i
 This view and the text direction match the values of the pins of the PCB. B0 (aka B- is not connected though is present and on the PCB. Battery tab is not connected, but it is present and folded back behind the side epoxy glass panel). In addition, the far right pin is also not connected.
 
 Connectors on the PCB are Molex 502352-1100[^digikey_molex_11pf] and 502352-0700[^digikey_molex_7pf]. The female cnnectors on the harness are Molex 502351-1100[^digikey_molex_11pm] and 502351-0700[^digikey_molex_7pm]. You can get pre-crimped wires here[^digikey_molex_female_wire]
+
 ![PCB Balance pinout](/images/panasonic_32ah/balance_pinout.png)
 
 ### Thermistor Routing
