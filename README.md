@@ -36,6 +36,7 @@ This can be used to read a lot of data from the battery BMS (like health, lifeti
 Reverse engineering progress of the RS485 protocol is documented under [./bms_comm/README.md](./bms_comm/README.md).
 
 ### Battery
+Check out [/battery/](./battery) for more in-depth info
 
 The stock battery is in a "60V nominal" 16S configuration.
 
@@ -43,7 +44,7 @@ There are different types of cells used in the batteries (also, battery type can
 
 | Battery       | Cell type                              | Configuration | charge std (max) | discharge std (max) |
 |---------------|----------------------------------------|---------------|------------------|---------------------|
-| 32Ah / 1900Wh | Panasonic NCR18650PF [^forum-manual]   | 16S11P        | 15A (22A)        | 88A (110A)          |
+| [32Ah / 1900Wh](/battery/PANASONIC_18650.md) | Panasonic NCR18650PF [^forum-manual]   | 16S11P        | 15A (22A)        | 88A (110A)          |
 | 34Ah / 2040Wh | Panasonic NCR18650BD                   | 16S11P        | 10A (16.5A)      | 88A (110A)          |
 | 38Ah / 2220Wh | Samsung INR18650-35E [^reddit-battery] | 16S11P        | 11A (22A)        | 88A (143A)          |
 | 40Ah / 2400Wh | Panasonic NCR21700A [^reddit-battery]  | 16S8P         | 12A (24A)        | 120A                |
@@ -80,7 +81,7 @@ As of now, it's only known that the connector seems to be (at least similar to) 
 #### Pre-2024 discharge Connector
 ![RCPROPLUS connector with positive and negative marking](./images/battery-discharge-connector.jpg)
 
-The discharge connector is a RCPROPLUS "REB 6808 Pro D6 P8" and uses the "female" contacts for both pins on the battery side. The pin toward the corner of the battery (with the larger plastic shroud around the contact) is the _positive_ terminal.
+The discharge connector is a RCPROPLUS "REB 6808 Pro D6 P8" (aka Supra-X connector) and uses the "female" contacts for both pins on the battery side. The pin toward the corner of the battery (with the larger plastic shroud around the contact) is the _positive_ terminal.
 
 So the connector on the bike side has two "male" contacts and the one with the larger plastic shroud is the _negative_ terminal.
 
